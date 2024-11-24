@@ -23,4 +23,22 @@ r="${r//_US_/_}"
 r="${r//_TK_/\`}"
 r="${r//_BR_/|}"
 r="${r//_TL_/~}"
-echo $r
+echo "" | awk 'END { s = "'"$r"'";
+    righti = -1;
+    for (i = 0; i < length(s); i ++) {
+        if (substr(s,i,1) == ":") {
+            i ++;
+            if (substr(s,i,1) != ":") {
+                righti = i;
+            }
+        }
+    }
+
+    if (righti == -1) {
+        print s;
+    } else {
+        right = substr(s, righti, length(s)-righti+1);
+        left = substr(s, 0, righti - 2);
+        print left "\t" right;
+    }
+}'
