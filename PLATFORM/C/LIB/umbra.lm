@@ -23,7 +23,7 @@
 #   that does not have a big performance impact in most applications
 # - for [UmbraLong]: the [.nth] implementation loads from the prefix if the index is less than 4,
 #   which is good in many scenarios, but the compiler does not know that it is
-#   just as save to load from the memory directly (because of the if expression),
+#   just as safe to load from the memory directly (because of the if expression),
 #   which hurts vectorization a lot.
 #   If you know that that might happen, you might be able to use the [addr] function
 #
