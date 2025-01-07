@@ -60,15 +60,16 @@ type Umbra (Umbra( len:U32 , backing:UmbraShortLong ));
 
 # DOES NOT CLONE THE STRING
 set[] := λ(: s Umbra)(: i U64)(: v U8). (: (
+   (let u (.backing s))
    (match u (
       ()
       ( (UmbraShort( arr ))
             (set[]( arr i v ) ) )
-      ( (UmbraLong( prefix ptr )) 
+      ( (UmbraLong( _ )) 
             (if (<( i 4_u64 ))
-               (set[]( prefix i v ))
+               (set[]( (.prefix u) i v ))
                ()) 
-            (set[]( ptr i v )) )
+            (set[]( (.ptr u) i v )) )
    ))
    s
 ) Umbra);
