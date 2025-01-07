@@ -1,0 +1,36 @@
+
+import LIB/default.lm;
+
+main := λ. (: (
+   # test short string
+   (let a (to-umbra(CHey_s)))
+   (let a (clone(a)))
+   (let a (+(a C!_s)))
+   (let hash (deep_hash(a)))
+   (if (!=(a CHey!_s)) (
+      (exit(1))
+   ) ())
+   (if (==(a CHey_s)) (
+      (exit(2))
+   ) ())
+   (if (!(.has-prefix(a CHe_s))) (
+      (exit(3))
+   ) ())
+   (print(a))
+
+   # test long string
+   (let a (to-umbra(Cabcdefghijklmnopqrstuvwxy_s)))
+   (let a (clone(a)))
+   (let a (+(a Cz_s)))
+   (let hash (deep_hash(a)))
+   (if (!=(a Cabcdefghijklmnopqrstuvwxyz_s)) (
+      (exit(1))
+   ) ())
+   (if (==(a Cabcd_s)) (
+      (exit(2))
+   ) ())
+   (if (!(.has-prefix(a Cabc_s))) (
+      (exit(3))
+   ) ())
+   (print(a))
+) Nil);
