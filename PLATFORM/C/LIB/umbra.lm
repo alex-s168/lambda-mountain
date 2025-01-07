@@ -63,11 +63,12 @@ set[] := λ(: s Umbra)(: i U64)(: v U8). (: (
    (match u (
       ()
       ( (UmbraShort( arr ))
-            (set[] arr i v) )
-      ( (UmbraLong( _ )) 
-            (if (< i 4_u64)
-               (set[] (.prefix u) i v)) 
-            (set[] (.ptr u) i v) )
+            (set[]( arr i v ) ) )
+      ( (UmbraLong( prefix ptr )) 
+            (if (<( i 4_u64 ))
+               (set[]( prefix i v ))
+               ()) 
+            (set[]( ptr i v )) )
    ))
    s
 ) Umbra);
