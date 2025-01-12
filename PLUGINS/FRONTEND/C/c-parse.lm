@@ -9,6 +9,7 @@ c-parse := λ(: tokens List<String>). (: (
    (while (non-zero tokens) (
       (let prev-tokens tokens)
       (if (&&( (non-zero tokens) (==( (head tokens) '__extension___s )) )) (set tokens (tail tokens)) ())
+      (if (&&( (non-zero tokens) (==( (head tokens) '_Noreturn_s )) )) (set tokens (tail tokens)) ())
       (if (&&( (non-zero tokens) (==( (head tokens) '\:_s )) )) (set tokens (tail tokens)) ())
       (if (&&( (non-zero tokens) (==( (head tokens) 'typedef_s )) )) (set tokens (c-parse-typedef tokens)) ())
       (if (&&( (is( prev-tokens tokens )) (&&( (non-zero tokens) (c-is-typename(head tokens)) )) )) (set tokens (c-parse-declaration tokens)) ())
