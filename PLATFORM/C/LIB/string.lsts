@@ -23,3 +23,20 @@ let .is-digit(base: CString): U64 = (
       r
    } else false
 );
+
+let .split(self: t, seperator: s, mk-empty: Arrow<Nil, ot>, concat: Arrow<Cons<ot,s>, ot>): Vector<ot> = (
+   let out = mk-vector(type(ot), 4);
+   out.push(mk-empty());
+   let i = 0_u64;
+   while i < self.length {
+      let c = self[i];
+      if c == seperator {
+         out.push(mk-empty);
+      } else {
+         let lasti = out.length - 1;
+         out[lasti] = concat(out[lasti], c);
+      };
+      i = i + 1;
+   };
+   out
+);

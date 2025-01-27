@@ -51,3 +51,9 @@ let print(io: IO::File, x: SmartString): Nil = (
       start = start + 1_u64;
    };
 );
+
+let $"+"(s: SmartString, c: U8): SmartString = (
+   let csa = [c, 0_u8];
+   let cs = (csa as U8[]) as String;
+   s + cs
+);

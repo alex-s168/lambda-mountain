@@ -1,0 +1,9 @@
+
+import LIB/default.lm;
+
+let empty_smart(): SmartString = (
+   to-smart-string("")
+);
+
+let a = "hello world";
+print(a.split(32_u8, empty_smart, $"+"));
