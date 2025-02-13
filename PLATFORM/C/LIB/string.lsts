@@ -23,3 +23,53 @@ let .is-digit(base: CString): U64 = (
       r
    } else false
 );
+
+let .substring(self: CString, begin: U64): CString = (
+    ((((self as U8[]) as U64) + begin) as U8[]) as CString
+);
+
+let $"[]"(self: CString, idx: U64): U8 = (
+    (self as U8[])[idx]
+);
+
+# TODO: move all generic collection functions somewhere else
+
+let .find-first(list: t, elem: e): Maybe<U64> = (
+   let found = false;
+
+   let i = 0_u64;
+   while i < list.length() {
+      if list[i] == elem {
+         found = true;
+         break;
+      } else {
+         i = i + 1;
+      };
+   };
+
+   if found {
+      Some{i}
+   } else {
+      None
+   }
+);
+
+let .find-last(list: t, elem: e): Maybe<U64> = (
+   let found = false;
+   let found_idx = 0_u64;
+
+   let i = 0_u64;
+   while i < list.length() {
+      if list[i] == elem {
+         found = true;
+         found_idx = i;
+      };
+      i = i + 1;
+   };
+
+   if found {
+      Some{found_idx}
+   } else {
+      None
+   }
+);
