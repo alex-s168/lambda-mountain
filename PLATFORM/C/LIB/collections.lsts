@@ -1,0 +1,105 @@
+
+let cmp(ls: ta, rs: tb): Ord = (
+   let diff = Equal;
+
+   let lslen = ls.length();
+   let rslen = rs.length();
+
+   let li = 0_u64;
+   let ri = 0_u64;
+
+   while is(diff, Equal) && li < lslen && ri < rslen {
+      diff = cmp(ls[li], rs[ri]);
+      li = li + 1;
+      ri = ri + 1;
+   };
+   if not(is(diff,Equal)) then diff else
+   if li == lslen && ri != rslen then LessThan else
+   if li != lslen && ri == rslen then GreaterThan else
+   Equal
+);
+
+let .contains(self: t, value: e): U64 = (
+   let ok = false;
+   let len = self.length();
+   let i = 0_u64;
+   while not(ok) && i < len {
+      if self[i] == value {
+         ok = true;
+      };
+      i = i + 1;
+   };
+   ok
+);
+
+let .join(self: t, sep: String, prefix: String, suffix: String): String = (
+   let out = prefix;
+   let len = self.length();
+   let i = 0_u64;
+   while i < len {
+      if i != 0 {
+         out = out + sep;
+      };
+      out = out + to-smart-string(self[i]);
+      i = i + 1;
+   };
+   if suffix.length() > 0 {
+      out = out + suffix;
+   };
+   out
+);
+
+let .join(self: t, sep: String): String = (
+   self.join(sep, "", "")
+);
+
+# should not be used
+let .join(self: t, sep: CString): CString = (
+   untern(self.join(intern(sep), "", ""))
+);
+
+let to-smart-string(ls: t): String = (
+   ls.join(", ", "[", "]")
+);
+
+let .find-first(list: t, elem: e): Maybe<U64> = (
+   let found = false;
+
+   let i = 0_u64;
+   let len = list.length();
+   while i < len {
+      if list[i] == elem {
+         found = true;
+         i = len; # break
+      } else {
+         i = i + 1;
+      };
+   };
+
+   if found {
+      Some{i}
+   } else {
+      None{} :: Maybe<U64>
+   }
+);
+
+let .find-last(list: t, elem: e): Maybe<U64> = (
+   let found = false;
+   let found_idx = 0_u64;
+
+   let i = 0_u64;
+   let len = list.length();
+   while i < len {
+      if list[i] == elem {
+         found = true;
+         found_idx = i;
+      };
+      i = i + 1;
+   };
+
+   if found {
+      Some{found_idx}
+   } else {
+      None{} :: Maybe<U64>
+   }
+);

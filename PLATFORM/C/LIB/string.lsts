@@ -1,4 +1,12 @@
 
+let .substring(self: CString, begin: U64): CString = (
+    ((((self as U8[]) as U64) + begin) as U8[]) as CString
+);
+
+let $"[]"(self: CString, idx: U64): U8 = (
+    (self as U8[])[idx]
+);
+
 let cmp(l: CString, r: CString): Ord = (
    let c = strcmp( (l as U8[]), (r as U8[]) );
    if c < 0_i32 { LessThan }

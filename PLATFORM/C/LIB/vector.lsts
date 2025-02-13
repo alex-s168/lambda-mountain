@@ -6,13 +6,43 @@ let mk-vector(type: Type<t>, capacity: U64): Vector<t> = (
    Vector { (malloc(data-sz) as t[]), 0_u64, capacity }
 );
 
+# does not change length
+let .realloc(v: Vector<t>, target-capacity: U64): Vector<t> = (
+   let data-sz = sizeof(t) * target-capacity;
+   let newp = realloc(v.data as ?[], data-sz) as t[];
+   Vector { newp, v.length, target-capacity }
+);
+
 let .push(v: Vector<t>, i: t): Vector<t> = (
    if v.length >= v.capacity {
-      fail("Vector Overflow during .push")
+      let new-cap = if v.capacity == 0 {
+         4
+      } else { # mul 1.5
+         (v.capacity << 1) + v.capacity
+      };
+      v = v.realloc(new-cap);
    };
    v.data[v.length] = i;
    v.length = v.length + 1_u64;
    v
+);
+
+let .pop(v: Vector<t>): Tuple<Vector<t>, t> = (
+    if v.length() == 0 {
+        fail("Tried to pop from empty Vector.");
+    };
+    let lasti = v.length - 1;
+    let last = v[lasti];
+    v.length = lasti;
+    v.capacity = v.capacity;
+
+    let too-much = v.capacity - v.length;
+    let minimum = (v.length << 1) + v.length; # mul 1.5
+    if too-much > minimum {
+       v = v.realloc(minimum);
+    };
+
+    Tuple { v, last }
 );
 
 let .to-vector(l: List<t>): Vector<t> = (
@@ -32,10 +62,15 @@ let $"[]"( v: Vector<t>, i: U64 ): t = (
 
 let $"+"( vl: Vector<t>, vr: Vector<t> ): t = (
    let v = mk-vector(type(t), vl.length + vr.length);
-   let vi = 0_u64;
-   while vi < vl.length { v = v.push(vl[vi]); };
-   vi = 0_u64;
-   while vi < vr.length { v = v.push(vr[vi]); };
+
+   for x in vl.unsafe-iter() {
+      v = v.push(x);
+   };
+
+   for x in vr.unsafe-iter() {
+      v = v.push(x);
+   };
+
    v
 );
 
@@ -45,6 +80,38 @@ let $"set[]"( v: Vector<t>, i: U64, val: t ): Nil = (
    };
    v.data[i] = val; 
    ()
+);
+
+type VectorIter<t> = VectorIter { vec: Vector<t>, idx: U64 };
+
+# for safety, we clone the vector
+# All modifications done to the vector after creating the iterator will not be seen
+let .iter(v: Vector<t>): VectorIter<t> = (
+   let clone = mk-vector(type(t), v.length);
+   let i = 0_u64;
+   while i < v.length {
+      clone = clone.push(v[i]);
+      i = i + 1;
+   };
+
+   clone.unsafe-iter()
+);
+
+# If you modify the vector after creating the iterator, weird things will happen
+let .unsafe-iter(v: Vector<t>): VectorIter<t> = (
+   VectorIter { v, 0_u64 }
+);
+
+let .next(p: Array<VectorIter<t>,?>): Maybe<t> = (
+   let v = p[0];
+   if v.idx < v.vec.length {
+      let val = v.vec[v.idx];
+      v.idx = v.idx + 1;
+      p[0] = v;
+      Some { val }
+   } else {
+      None
+   }
 );
 
 let .sort(v: Vector<t>): Vector<t> = (
@@ -71,32 +138,6 @@ let .sort(v: Vector<t>): Vector<t> = (
 );
 
 let print(v: Vector<x>): Nil = (
-   let vi = 0_u64;
-   print(c"[");
-   while vi < v.length {
-      if vi > 0_u64 then print(c",");
-      print(v.data[vi]);
-      vi = vi + 1_u64;
-   };
-   print(c"]");
+   print(untern(to-smart-string(v)));
 );
 
-let $"=="(a: Vector<t>, b: Vector<t>): U64 = (
-    let al = a.length();
-    let bl = b.length();
-    if al == bl {
-        let i = 0_u64;
-        let ok = 1_u64;
-        while i < al {
-            if a[i] != b[i] {
-                ok = 0_u64;
-                i = al; # break
-            } else {
-                i = i + 1;
-            }
-        };
-        ok
-    } else {
-        0_u64
-    }
-);
