@@ -80,3 +80,23 @@ let print(v: Vector<x>): Nil = (
    };
    print(c"]");
 );
+
+let $"=="(a: Vector<t>, b: Vector<t>): U64 = (
+    let al = a.length();
+    let bl = b.length();
+    if al == bl {
+        let i = 0_u64;
+        let ok = 1_u64;
+        while i < al {
+            if a[i] != b[i] {
+                ok = 0_u64;
+                i = al; # break
+            } else {
+                i = i + 1;
+            }
+        };
+        ok
+    } else {
+        0_u64
+    }
+);
