@@ -1,29 +1,9 @@
 
-let cmp(ls: List<x>, rs: List<x>): Ord = (
-   let diff = Equal;
-   while is(diff, Equal) && non-zero(ls) && non-zero(rs) {
-      diff = cmp(head(ls), head(rs));
-      ls = tail(ls);
-      rs = tail(rs);
+let $"[]"(tt: List<x>, idx: U64): x = (
+   while idx > 0 {
+      tt = tail(tt);
    };
-   if not(is(diff,Equal)) then diff else
-   if not(non-zero(ls)) && non-zero(rs) then LessThan else
-   if non-zero(ls) && not(non-zero(rs)) then GreaterThan else
-   Equal
-);
-
-let to-smart-string(ls: List<x>): String = (
-   let s = "[";
-   let si = 0_u64;
-   for l in ls {
-      if si > 0_u64 {
-         s = s + ",";
-      };
-      s = s + to-smart-string(l);
-      si = si + 1_u64;
-   };
-   s = s + "]";
-   s
+   head(tt)
 );
 
 let .unique(ls: List<x>): List<x> = (
