@@ -108,9 +108,9 @@ let .next(p: Array<VectorIter<t>,?>): Maybe<t> = (
       let val = v.vec[v.idx];
       v.idx = v.idx + 1;
       p[0] = v;
-      Some { val }
+      Some { val } :: Maybe<t>
    } else {
-      None
+      None :: Maybe<t>
    }
 );
 
