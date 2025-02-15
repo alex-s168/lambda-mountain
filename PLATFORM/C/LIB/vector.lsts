@@ -6,7 +6,7 @@ let mk-vector(type: Type<t>, capacity: U64): Vector<t> = (
    Vector { (malloc(data-sz) as t[]), 0_u64, capacity }
 );
 
-# does not change length
+# does not change length!
 let .realloc(v: Vector<t>, target-capacity: U64): Vector<t> = (
    let data-sz = sizeof(t) * target-capacity;
    let newp = realloc(v.data as ?[], data-sz) as t[];
@@ -27,20 +27,49 @@ let .push(v: Vector<t>, i: t): Vector<t> = (
    v
 );
 
-let .pop(v: Vector<t>): Tuple<Vector<t>, t> = (
-    if v.length() == 0 {
-        fail("Tried to pop from empty Vector.");
-    };
-    let lasti = v.length - 1;
-    let last = v[lasti];
-    v.length = lasti;
-    v.capacity = v.capacity;
-
+# shrinks the vector if it has way too many elements. shouldn't be called manually
+let .shrink(v: Vector<t>): Vector<t> = (
     let too-much = v.capacity - v.length;
     let minimum = (v.length << 1) + v.length; # mul 1.5
     if too-much > minimum {
        v = v.realloc(minimum);
     };
+    v
+);
+
+let .remove-front(v: Vector<t>, num: U64): Vector<t> = (
+    if num > v.length() {
+        fail("tried to remove \{num} elements from vector, but only have \{v.length()}");
+    };
+
+    let i = num;
+    while i < v.length() {
+        v[i-num] = v[i];
+        i = i + 1;
+    };
+    v.length = v.length - num;
+
+    v.shrink();
+);
+
+let .remove-back(v: Vector<t>, num: U64): Vector<t> = (
+    if num > v.length() {
+        fail("tried to remove \{num} elements from vector, but only have \{v.length()}");
+    };
+
+    v.length = v.length - num;
+
+    v.shrink();
+);
+
+let .pop(v: Vector<t>): Tuple<Vector<t>, t> = (
+    if v.length() == 0 {
+        fail("Tried to pop from empty Vector.");
+    };
+
+    let lasti = v.length - 1;
+    let last = v[lasti];
+    v = v.remove-back(1);
 
     Tuple { v, last }
 );
