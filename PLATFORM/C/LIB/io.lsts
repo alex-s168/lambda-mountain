@@ -1,6 +1,6 @@
 
 let .file-extension(path: CString): CString = (
-   let dot = path.find-last(46_u8);
+   let dot = path.find-last(c"."[0]);
    match dot {
       Some{content=content} => path.substring(content + 1);
       None{} => untern("");

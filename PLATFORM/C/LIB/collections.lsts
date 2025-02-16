@@ -66,10 +66,12 @@ let .find-first(list: t, elem: e): Maybe<U64> = (
    let found = false;
 
    let i = 0_u64;
+   let where = 0_u64;
    let len = list.length();
    while i < len {
       if list[i] == elem {
          found = true;
+         where = i;
          i = len; # break
       } else {
          i = i + 1;
@@ -77,7 +79,7 @@ let .find-first(list: t, elem: e): Maybe<U64> = (
    };
 
    if found {
-      Some{i}
+      Some{where}
    } else {
       None{} :: Maybe<U64>
    }
