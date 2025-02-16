@@ -1,6 +1,9 @@
 
 let $"[]"(tt: List<x>, idx: U64): x = (
    while idx > 0 {
+      if not(tt.has-head()) {
+         fail("index \{idx} is out of bounds for list of length \{tt.length()}");
+      };
       tt = tail(tt);
    };
    head(tt)
