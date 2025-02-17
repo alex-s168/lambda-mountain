@@ -1,0 +1,155 @@
+
+type SerialVal = SerialUInt { val: U64 }
+               | SerialInt  { val: I64 }
+               | SerialFlt  { val: F64 }
+               | SerialBool { val: U8 }
+               | SerialStr  { val: String }
+               | SerialVec  { val: Vector<SerialVal[]> }
+               | SerialDict { val: HashtableEq<SerialVal[], SerialVal[]> }
+               ;
+
+interface Serializable {
+   let serialize(self: Serializable): SerialVal;
+};
+
+let serialize(val: SerialVal): SerialVal = (
+   val
+);
+
+let serialize(val: Bool): SerialVal = (
+   SerialBool { val }
+);
+
+let serialize(val: U64): SerialVal = (
+   SerialUInt { val }
+);
+
+let serialize(val: I64): SerialVal = (
+   SerialInt { val }
+);
+
+let serialize(val: F64): SerialVal = (
+   SerialFlt { val }
+);
+
+let serialize(val: String): SerialVal = (
+   SerialStr { val }
+);
+
+let serialize(val: CString): SerialVal = (
+   SerialStr { (to-smart-string(val)) }
+);
+
+let serialize(self: Collection<t+Serializable>): SerialVal = (
+   let out = mk-vector(type(SerialVal), 8);
+   let i = 0_u64;
+   let ln = self.length();
+   while i < ln {
+      out = out.push(close(serialize(self[i])));
+      i = i + 1;
+   };
+   SerialVec { out }
+);
+
+let serialize(self: HashtableEq<k+Serializable,v+Serializable>): SerialVal = (
+   let out = {} :: HashtableEq<SerialVal, SerialVal>;
+
+   for x in self.unsafe-iter() {
+      out = out.bind(
+         close(serialize(x.first)), 
+         close(serialize(x.second)));
+   };
+
+   SerialDict { out }
+);
+
+type JsonSerializeCfg = JsonSerializeCfg { pretty: U8, indent: U64 };
+
+let to-smart-string(self: SerialVal): String = (
+   self.to-json(JsonSerializeCfg { true, 2 }, 0)
+);
+
+let to-smart-string(self: Serializable): String = (
+   to-smart-string(serialize(self))
+);
+
+let .to-json(self: SerialVal, cfg: JsonSerializeCfg, depth: U64): String = (
+   match self {
+      SerialUInt { val=val } => ( to-smart-string(val) );
+      SerialInt  { val=val } => ( to-smart-string(val) );
+      SerialFlt  { val=val } => ( to-smart-string(val) );
+
+      SerialBool { val=val } => (
+         if val { "true" }
+         else { "false" }
+      );
+
+      SerialStr  { val=val } => ( "\"\{val}\"" );
+
+      SerialVec  { val=val } => (
+         let out = "[";
+         if cfg.pretty {
+            let first = true;
+            for x in val.unsafe-iter() {
+               if first {
+                  first = false;
+               } else {
+                  out = out + ",\n";
+               };
+               out = out + " ".repeat(depth * cfg.indent);
+               out = out + open(x).to-json(cfg, depth + 1);
+            };
+            if val.length() > 0 {
+               out = out + "\n";
+            };
+         } else {
+            let first = true;
+            for x in val.unsafe-iter() {
+               if first {
+                  first = false;
+               } else {
+                  out = out + ", ";
+               };
+               out = out + open(x).to-json(cfg, depth + 1);
+            };
+         };
+         out = out + "]";
+      );
+
+      SerialDict { val=val } => (
+         let out = "{";
+         if cfg.pretty {
+            let first = true;
+            let any = false;
+            for x in val.unsafe-iter() {
+               any = true;
+               if first {
+                  first = false;
+               } else {
+                  out = out + ",\n";
+               };
+               out = out + " ".repeat(depth * cfg.indent);
+               out = out + open(x.first).to-json(cfg, depth + 1);
+               out = out + ": ";
+               out = out + open(x.second).to-json(cfg, depth + 1);
+            };
+            if any {
+               out = out + "\n";
+            };
+         } else {
+            let first = true;
+            for x in val.unsafe-iter() {
+               if first {
+                  first = false;
+               } else {
+                  out = out + ", ";
+               };
+               out = out + open(x.first).to-json(cfg, depth + 1);
+               out = out + ": ";
+               out = out + open(x.second).to-json(cfg, depth + 1);
+            };
+         };
+         out = out + "}";
+      );
+   }
+);
