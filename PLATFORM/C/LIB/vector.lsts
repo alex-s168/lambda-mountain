@@ -6,6 +6,15 @@ let mk-vector(type: Type<t>, capacity: U64): Vector<t> = (
    Vector { (malloc(data-sz) as t[]), 0_u64, capacity }
 );
 
+let fill-vector(value: t, len: U64): Vector<t> = (
+   let v = mk-vector(type(t), len);
+   while len > 0 {
+      v[len-1] = value;
+      len = len - 1;
+   };
+   v
+);
+
 # does not change length!
 let .realloc(v: Vector<t>, target-capacity: U64): Vector<t> = (
    let data-sz = sizeof(t) * target-capacity;
@@ -170,3 +179,30 @@ let print(v: Vector<x>): Nil = (
    print(untern(to-smart-string(v)));
 );
 
+# MAKES INPUT VECTOR INVALID
+let .move-to-cstring(self: Vector<U8>): CString = (
+   self = self.push(0_u8);
+   (self.data as U8[]) as CString
+);
+
+# MAKES INPUT VECTOR INVALID
+let .move-to-smart-string(self: Vector<U8>): SmartString = (
+   intern(self.move-to-cstring())
+);
+
+let .as-cstring(self: Vector<U8>): CString = (
+   let cpy = malloc(self.length + 1) as U8[];
+
+   let i = 0_u64;
+   while i < self.length {
+      cpy[i] = self.data[i];
+      i = i + 1;
+   };
+   cpy[i] = 0_u8;
+
+   cpy as CString
+);
+
+let .as-smart-string(self: Vector<U8>): SmartString = (
+   intern(self.as-cstring());
+);

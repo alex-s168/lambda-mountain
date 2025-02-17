@@ -1,5 +1,68 @@
 
-let cmp(ls: ta, rs: tb): Ord = (
+interface Collection<t> {
+   let .length(self: Collection<t>): U64;
+   let $"[]"(self: Collection<t>, idx: U64): t;
+};
+
+interface Iterator<t> {
+   let .next(self: Iterator<t>[]): Maybe<t>;
+};
+
+interface Iterable<t> {
+   let .iter(): Iterator<t>;
+   let .unsafe-iter(): Iterator<t>;
+};
+
+type ZipIterator<ai+Iterator<at>, bi+Iterator<bt>> = ZipIterator { aii: ai, bii: bi };
+
+let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt>> = (
+   let v = open(p);
+   let av = (&v.aii).next();
+   let bv = (&v.bii).next();
+
+   let res = if av.is-some() && bv.is-some() {
+      Some { Tuple { av.get-or-panic(), bv.get-or-panic() } } :: Maybe<Tuple<at,bt>>
+   } else {
+      None :: Maybe<Tuple<at,bt>>
+   };
+
+   p[0] = v;
+
+   res
+);
+
+let .zip(ai+Iterator<at>, bi+Iterator<bt>): ZipIterator<ai,bi> = (
+   ZipIterator { ai, bi }
+);
+
+type EnumerateIterator<i+Iterator<t>> = EnumerateIterator { ii: i, idx: U64 };
+
+let .next(p: EnumerateIterator<i+Iterator<t>>[]): Maybe<Tuple<U64, i>> = (
+   let v = open(p);
+   let iv = (&v.ii).next();
+
+   let res = match iv {
+      Some { content=content } => (
+         let oldv = v.idx;
+         v.idx = v.idx + 1;
+         Some { Tuple { oldv, content } } :: Maybe<Tuple<at,bt>>
+      );
+
+      None {} => (
+         None :: Maybe<Tuple<at,bt>>
+      );
+   };
+
+   p[0] = v;
+
+   res
+);
+
+let .enumerate(i+Iterator<t>): EnumerateIterator<i> = (
+   EnumerateIterator { i, 0_u64 }
+);
+
+let cmp(ls: Collection<a>, rs: Collection<b>): Ord = (
    let diff = Equal;
 
    let lslen = ls.length();
@@ -19,29 +82,23 @@ let cmp(ls: ta, rs: tb): Ord = (
    Equal
 );
 
-let .contains(self: t, value: e): U64 = (
+let .contains(self: Iterable<t>, value: t): U64 = (
    let ok = false;
-   let len = self.length();
-   let i = 0_u64;
-   while not(ok) && i < len {
-      if self[i] == value {
+   for x in self.unsafe-iter() {
+      if x == value {
          ok = true;
       };
-      i = i + 1;
    };
    ok
 );
 
-let .join(self: t, sep: String, prefix: String, suffix: String): String = (
+let .join(self: Iterable<t>, sep: String, prefix: String, suffix: String): String = (
    let out = prefix;
-   let len = self.length();
-   let i = 0_u64;
-   while i < len {
-      if i != 0 {
+   for iv in self.unsafe-iter().enumerate() {
+      if iv.first != 0 {
          out = out + sep;
       };
-      out = out + to-smart-string(self[i]);
-      i = i + 1;
+      out = out + to-smart-string(iv.second);
    };
    if suffix.length() > 0 {
       out = out + suffix;
@@ -49,20 +106,22 @@ let .join(self: t, sep: String, prefix: String, suffix: String): String = (
    out
 );
 
-let .join(self: t, sep: String): String = (
+let .join(self: Iterable<t>, sep: String): String = (
    self.join(sep, "", "")
 );
 
 # should not be used
-let .join(self: t, sep: CString): CString = (
+let .join(self: Iterable<t>, sep: CString): CString = (
    untern(self.join(intern(sep), "", ""))
 );
 
-let to-smart-string(ls: t): String = (
+let to-smart-string(ls: Iterable<t>): String = (
    ls.join(", ", "[", "]")
 );
 
-let .find-first(list: t, elem: e): Maybe<U64> = (
+# TODO: use iterators in the following two functions
+
+let .find-first(list: Collection<t>, elem: e): Maybe<U64> = (
    let found = false;
 
    let i = 0_u64;
@@ -85,7 +144,7 @@ let .find-first(list: t, elem: e): Maybe<U64> = (
    }
 );
 
-let .find-last(list: t, elem: e): Maybe<U64> = (
+let .find-last(list: Collection<t>, elem: e): Maybe<U64> = (
    let found = false;
    let found_idx = 0_u64;
 
@@ -104,4 +163,15 @@ let .find-last(list: t, elem: e): Maybe<U64> = (
    } else {
       None{} :: Maybe<U64>
    }
+);
+
+let .repeat(self: Iterable<t>, times: U64): Vector<t> = (
+   let out = mk-vector(type(t), times);
+   while times > 0 {
+      for x in self {
+         out = out.push(x);
+      }
+      times = times - 1;
+   };
+   out
 );
