@@ -1,6 +1,4 @@
 
-# TODO: use .iter() for iter and don't make list a iter itself
-
 let $"[]"(tt: List<x>, idx: U64): x = (
    while idx > 0 {
       if not(tt.has-head()) {
@@ -21,14 +19,24 @@ let .unique(ls: List<x>): List<x> = (
    rs
 );
 
-let .next(ls: Array<List<x>,?>): Maybe<x> = (
-   match open(ls) {
+type ListIter<x> = ListIter { list: List<x> }
+
+let .next(ls: ListIter<x>[]): Maybe<x> = (
+   match open(ls.list) {
       [i.. rst] => (
-         ls[0_u64] = rst;
+         ls[0_u64].list = rst;
          Some(i)
       );
       [] => (None :: Maybe<x>);
    };
+);
+
+let .iter(li: List<x>): ListIter<x> = (
+   li.unsafe-iter();
+);
+
+let .unsafe-iter(li: List<x>): ListIter<x> = (
+   ListIter { li }
 );
 
 let .lookup(ls: List<Tuple<k,v>>, key: k, default: v): v = (

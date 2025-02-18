@@ -12,44 +12,133 @@ interface Serializable {
    let serialize(self: Serializable): SerialVal;
 };
 
+interface Deserializable {
+   let deserialize(val: SerialVal, ty: Type<Deserializable>): Deserializable;
+};
+
+let deserialize(val: SerialVal, ty: Type<SerialVal>): SerialVal = (
+   val
+);
+
 let serialize(val: SerialVal): SerialVal = (
    val
+);
+
+let deserialize(vali: SerialVal, ty: Type<Bool>): Bool = (
+   deserialize(vali,type(U64)) as Bool
 );
 
 let serialize(val: Bool): SerialVal = (
    SerialBool { val }
 );
 
+let deserialize(vali: SerialVal, ty: Type<U64>): U64 = (
+   match vali {
+      SerialBool { val=val } => ( val as U64 );
+      SerialUInt { val=val } => ( val );
+      SerialInt  { val=val } => (
+         if val < 0 {
+            fail("cannot deserialize negative int to u64");
+         };
+         val as U64
+      );
+      SerialFlt { val=val } => ( # TODO: check if too large
+         if val != ((val as U64) as F64) {
+            fail("cannot deserialize decimal number to u64");
+         };
+         if val < 0 {
+            fail("cannot deserialize negative number to u64");
+         };
+         val as U64
+      );
+      SerialStr { val=val } => ( to-u64(val) );
+      other => ( fail("cannot deserialize u64 from this SerialVal"); );
+   }
+);
+
 let serialize(val: U64): SerialVal = (
    SerialUInt { val }
+);
+
+let deserialize(vali: SerialVal, ty: Type<I64>): I64 = (
+   match vali {
+      SerialBool { val=val } => ( val as I64 );
+      SerialUInt { val=val } => ( val as I64 ); # TODO: check highest bit
+      SerialInt  { val=val } => ( val );
+      SerialFlt { val=val } => ( # TODO: check if too large
+         if val != ((val as I64) as F64) {
+            fail("cannot deserialize decimal number to i64");
+         };
+         val as I64
+      );
+      SerialStr { val=val } => ( to-i64(val) );
+      other => ( fail("cannot deserialize i64 from this SerialVal"); );
+   }
 );
 
 let serialize(val: I64): SerialVal = (
    SerialInt { val }
 );
 
+let deserialize(vali: SerialVal, ty: Type<F64>): F64 = (
+   match vali {
+      SerialBool { val=val } => ( val as F64 );
+      SerialUInt { val=val } => ( val as F64 ); # TODO: check if loss prec
+      SerialInt  { val=val } => ( val as F64 ); # TODO: check if loss prec
+      SerialFlt  { val=val } => ( val );
+      SerialStr  { val=val } => ( to-f64(val) );
+      other => ( fail("cannot deserialize f64 from this SerialVal"); );
+   }
+);
+
 let serialize(val: F64): SerialVal = (
    SerialFlt { val }
+);
+
+let deserialize(vali: SerialVal, ty: Type<String>): String = (
+   match vali {
+      SerialStr  { val=val } => ( val );
+      other => ( fail("cannot deserialize string from this SerialVal"); );
+   }
 );
 
 let serialize(val: String): SerialVal = (
    SerialStr { val }
 );
 
+let deserialize(vali: SerialVal, ty: Type<CString>): CString = (
+   match vali {
+      SerialStr  { val=val } => ( untern(val) );
+      other => ( fail("cannot deserialize string from this SerialVal"); );
+   }
+);
+
 let serialize(val: CString): SerialVal = (
    SerialStr { (to-smart-string(val)) }
 );
 
-let serialize(self: Collection<t+Serializable>): SerialVal = (
-   let out = mk-vector(type(SerialVal), 8);
-   let i = 0_u64;
-   let ln = self.length();
-   while i < ln {
-      out = out.push(close(serialize(self[i])));
-      i = i + 1;
+let deserialize(vali: SerialVal, ty: Type<ot+FromVector<eltt+Deserializable>>): ot = (
+   match vali {
+      SerialVec { val=val } => (
+         let out = mk-vector(type(eltt), val.length());
+         for x in val {
+            out = out.push(deserialize(x,type(eltt)));
+         };
+         out.move-to(ty)
+      );
+      r => ( fail("can only deserialize collection from serialvec"); );
+   }
+);
+
+let serialize(self: Iterable<t+Serializable>): SerialVal = (
+   let out = mk-vector(type(SerialVal), length-or-zero(self));
+   for x in self {
+      out = out.push(close(serialize(x)));
    };
    SerialVec { out }
 );
+
+# TODO: deserialize for dict
 
 let serialize(self: HashtableEq<k+Serializable,v+Serializable>): SerialVal = (
    let out = {} :: HashtableEq<SerialVal, SerialVal>;

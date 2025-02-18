@@ -15,11 +15,19 @@ let fill-vector(value: t, len: U64): Vector<t> = (
    v
 );
 
-# does not change length!
+# does not change length, or destroy old elems!
 let .realloc(v: Vector<t>, target-capacity: U64): Vector<t> = (
    let data-sz = sizeof(t) * target-capacity;
    let newp = realloc(v.data as ?[], data-sz) as t[];
    Vector { newp, v.length, target-capacity }
+);
+
+let .reserve-additional(v: Vector<t>, additional: U64): Vector<t> = (
+   if (v.capacity - v.length) < additional {
+      v.realloc(v.length + additional)
+   } else {
+      v
+   }
 );
 
 let .push(v: Vector<t>, i: t): Vector<t> = (
@@ -162,13 +170,20 @@ let print(v: Vector<x>): Nil = (
    print(untern(to-smart-string(v)));
 );
 
-# TODO: reserve cap here
 let .push-all(self: Vector<t>, val: Iterable<t>): Vector<t> = (
+   let ln = length-or-null(val);
+   if ln != 0 {
+      self = self.reserve-additional(ln);
+   };
    for x in val {
       self = self.push(x);
    };
    self
 );
+
+interface FromVector<t> {
+   let .move-to(self: Vector<t>, out: Type<FromVector<t>>): FromVector<t>;
+};
 
 # MAKES INPUT VECTOR INVALID
 let .move-to(self: Vector<U8>, res: Type<CString>): CString = (

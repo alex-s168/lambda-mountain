@@ -28,7 +28,7 @@
 #   If you know that that might happen, you might be able to use the [addr] function
 #
 # TODOs:
-# - there should be an alternative string implementation optimizes for even shorter strings (8 bytes),
+# - maybe there should be an alternative string implementation optimizes for even shorter strings (8 bytes),
 #   which does not store the prefix
 # - maybe null-terminate the string if, any only if, it is stored as [UmbraLong]
 # - maybe padd the short array with zeros
@@ -253,4 +253,30 @@ let $"+"(l: t, r: Umbra[]): Umbra = (
 
 let $"+"(l: Umbra[], r: t): Umbra = (
     concat-to-umbra(l, r)
+);
+
+let .iter(self: Umbra): UmbraIter = (
+    to-umbra(self).unsafe-iter();
+);
+
+let .unsafe-iter(self: Umbra): UmbraIter = (
+    UmbraIter { self, 0 }
+);
+
+type UmbraIter = UmbraIter { str: Umbra, idx: U64 };
+
+let .skip(v: UmbraIter, amount: U64): UmbraIter = (
+   UmbraIter { v, v.idx + amount }
+);
+
+let .next(vp: UmbraIter[]): Maybe<U8> = (
+   let v = open(vp);
+   if v.idx >= v.str.length {
+      None :: Maybe<u8>
+   } else {
+      let val = v.str[v.idx];
+      v.idx = v.idx + 1;
+      vp[0] = v;
+      Some { val }
+   }
 );
