@@ -51,3 +51,11 @@ let print(io: IO::File, x: SmartString): Nil = (
       start = start + 1_u64;
    };
 );
+
+let .pad-left-str(self: String, value: U8, minlen: U64): String = (
+    self.pad-left(self, value, minlen).move-to(type(String))
+);
+
+let .pad-right-str(self: String, value: U8, minlen: U64): String = (
+    self.pad-right(self, value, minlen).move-to(type(String))
+);
