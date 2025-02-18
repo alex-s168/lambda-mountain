@@ -36,7 +36,7 @@ let to-smart-string(value: F64): SmartString = (
    out = out + to-smart-string(value as U64);
    out = out + to-smart-string(close(46_u8) as CString);
    let v = (value - ((value as U64) as F64)) * (10000 as F64);
-   let vs = to-smart-string(v as U64).pad-left(48_u8, 4);
+   let vs = to-smart-string(v as U64).pad-left-str(48_u8, 4);
    out = out + vs;
    out
 );

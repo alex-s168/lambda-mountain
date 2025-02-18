@@ -83,12 +83,8 @@ let .pop(v: Vector<t>): Tuple<Vector<t>, t> = (
     Tuple { v, last }
 );
 
-let .to-vector(l: List<t>): Vector<t> = (
-   let v = mk-vector(type(t), l.length);
-   for i in l {
-      v = v.push(i);
-   };
-   v
+let .clone(self: Vector<t>): Vector<t> = (
+    self.to-vector();
 );
 
 let $"[]"( v: Vector<t>, i: U64 ): t = (
@@ -99,17 +95,7 @@ let $"[]"( v: Vector<t>, i: U64 ): t = (
 );
 
 let $"+"( vl: Vector<t>, vr: Vector<t> ): t = (
-   let v = mk-vector(type(t), vl.length + vr.length);
-
-   for x in vl.unsafe-iter() {
-      v = v.push(x);
-   };
-
-   for x in vr.unsafe-iter() {
-      v = v.push(x);
-   };
-
-   v
+   concat-to-vector(vl, vr)
 );
 
 let $"set[]"( v: Vector<t>, i: U64, val: t ): Nil = (
@@ -125,14 +111,7 @@ type VectorIter<t> = VectorIter { vec: Vector<t>, idx: U64 };
 # for safety, we clone the vector
 # All modifications done to the vector after creating the iterator will not be seen
 let .iter(v: Vector<t>): VectorIter<t> = (
-   let clone = mk-vector(type(t), v.length);
-   let i = 0_u64;
-   while i < v.length {
-      clone = clone.push(v[i]);
-      i = i + 1;
-   };
-
-   clone.unsafe-iter()
+   v.clone().unsafe-iter()
 );
 
 # If you modify the vector after creating the iterator, weird things will happen
@@ -140,7 +119,11 @@ let .unsafe-iter(v: Vector<t>): VectorIter<t> = (
    VectorIter { v, 0_u64 }
 );
 
-let .next(p: Array<VectorIter<t>,?>): Maybe<t> = (
+let .skip(self: VectorIter<t>, num: U64): VectorIter<t> = (
+   VectorIter { self.vec, self.idx + num }
+);
+
+let .next(p: VectorIter<t>[]): Maybe<t> = (
    let v = p[0];
    if v.idx < v.vec.length {
       let val = v.vec[v.idx];
@@ -179,30 +162,21 @@ let print(v: Vector<x>): Nil = (
    print(untern(to-smart-string(v)));
 );
 
+# TODO: reserve cap here
+let .push-all(self: Vector<t>, val: Iterable<t>): Vector<t> = (
+   for x in val {
+      self = self.push(x);
+   };
+   self
+);
+
 # MAKES INPUT VECTOR INVALID
-let .move-to-cstring(self: Vector<U8>): CString = (
+let .move-to(self: Vector<U8>, res: Type<CString>): CString = (
    self = self.push(0_u8);
    (self.data as U8[]) as CString
 );
 
 # MAKES INPUT VECTOR INVALID
-let .move-to-smart-string(self: Vector<U8>): SmartString = (
+let .move-to(self: Vector<U8>, res: Type<SmartString>): SmartString = (
    intern(self.move-to-cstring())
-);
-
-let .as-cstring(self: Vector<U8>): CString = (
-   let cpy = malloc(self.length + 1) as U8[];
-
-   let i = 0_u64;
-   while i < self.length {
-      cpy[i] = self.data[i];
-      i = i + 1;
-   };
-   cpy[i] = 0_u8;
-
-   cpy as CString
-);
-
-let .as-smart-string(self: Vector<U8>): SmartString = (
-   intern(self.as-cstring());
 );

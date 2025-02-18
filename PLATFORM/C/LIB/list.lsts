@@ -1,4 +1,6 @@
 
+# TODO: use .iter() for iter and don't make list a iter itself
+
 let $"[]"(tt: List<x>, idx: U64): x = (
    while idx > 0 {
       if not(tt.has-head()) {

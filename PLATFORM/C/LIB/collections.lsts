@@ -13,6 +13,47 @@ interface Iterable<t> {
    let .unsafe-iter(): Iterator<t>;
 };
 
+interface FromVector<t> {
+   let .move-to(self: Vector<t>, out: Type<FromVector<t>>): FromVector<t>;
+};
+
+let remaining-eq(a: Iterator<at>, b: Iterator<bt>): U64 = (
+   let ok = true;
+   while ok {
+      let av = (&a).next();
+      let bv = (&b).next();
+      if av != bv {
+         ok = false;
+      };
+   };
+   ok
+);
+
+let .skip(self: Iterator<t>, num: U64): Iterator<t> = (
+   while num > 0 {
+      (&self).next();
+      num = num - 1;
+   };
+   self
+);
+
+type SkipIterator<i+Iterator<t>> = SkipIterator { ii: i, to_skip: U64 };
+
+let .skip(iter: SkipIterator<i>, amount: U64): SkipIterator<i> = (
+   SkipIterator { iter.ii, iter.to_skip + amount }
+);
+
+let .next(vp: SkipIterator<i+Iterator<t>>[]): Maybe<t> = (
+   let v = open(vp);
+   if v.to_skip > 0 {
+      v.ii = v.ii.skip(v.to_skip);
+      v.to_skip = 0;
+   };
+   let val = (&v.ii).next();
+   vp[0] = v;
+   val
+);
+
 type ZipIterator<ai+Iterator<at>, bi+Iterator<bt>> = ZipIterator { aii: ai, bii: bi };
 
 let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt>> = (
@@ -90,6 +131,55 @@ let .contains(self: Iterable<t>, value: t): U64 = (
       };
    };
    ok
+);
+
+# TODO: generic Collection<t> impl for Iterable<t>
+
+let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): Bool = (
+   if (self.length() - off) < seq.length() {
+      false
+   } else {
+      let ok = true;
+      for pair in self.unsafe-iter().skip(off).zip(seq.unsafe-iter()) {
+         if pair.first != pair.second {
+            ok = false;
+         };
+      };
+      ok
+   }
+);
+
+let .has-prefix(self: Iterable<t>, seq: Iterable<t>): Bool = (
+   self.has-prefix-at(0, seq);
+);
+
+let .has-suffix(self: Iterable<t>, seq: Iterable<t>): Bool = (
+   if seq.length() > self.length() {
+      false
+   } else {
+      remaining-eq(self.unsafe-iter().skip(self.length() - seq.length()), seq.unsafe-iter())
+   };
+);
+
+let .find-first(self: Iterable<t>, seq: Iterable<t>): Maybe<U64> = (
+   let found = false;
+   let i = 0_u64;
+   while i < self.length() && not(found) {
+      if self.has-prefix-at(i, seq) {
+         found = true;
+      } else {
+         i = i + 1;
+      };
+   };
+   if found {
+      Some { i }
+   } else {
+      None {} :: Maybe<U64>
+   };
+);
+
+let .contains(self: Iterable<t>, seq: Iterable<t>): U64 = (
+   self.find-first(seq).is-some()
 );
 
 let .join(self: Iterable<t>, sep: String, prefix: String, suffix: String): String = (
@@ -173,5 +263,65 @@ let .repeat(self: Iterable<t>, times: U64): Vector<t> = (
       }
       times = times - 1;
    };
+   out
+);
+
+let .to-vector(l: Iterable<t>): Vector<t> = (
+   let v = mk-vector(type(t), 0);
+   v = v.push-all(l);
+   v
+);
+
+let concat-to-vector( vl: Iterable<t>, vr: Iterable<t> ): t = (
+   let v = mk-vector(type(t), 0);
+
+   for x in vl.unsafe-iter() {
+      v = v.push(x);
+   };
+
+   for x in vr.unsafe-iter() {
+      v = v.push(x);
+   };
+
+   v
+);
+
+let .pad-left(self: Collection<t>, value: t, minlen: U64): Vector<t> = (
+   if self.length() > minlen {
+      minlen = self.length();
+   };
+
+   let out = mk-vector(type(t), minlen);
+
+   let i = 0_u64;
+   while i < (minlen - self.length()) {
+      out = out.push(value);
+   };
+
+   i = 0_u64;
+   while i < self.length() {
+      out = out.push(self[i]);
+   };
+
+   out
+);
+
+let .pad-right(self: Iterable<t>, value: t, minlen: U64): Vector<t> = (
+   if self.length() > minlen {
+      minlen = self.length();
+   };
+
+   let out = mk-vector(type(t), minlen);
+
+   let i = 0_u64;
+   while i < self.length() {
+      out = out.push(self[i]);
+   };
+
+   i = 0_u64;
+   while i < (minlen - self.length()) {
+      out = out.push(value);
+   };
+
    out
 );
