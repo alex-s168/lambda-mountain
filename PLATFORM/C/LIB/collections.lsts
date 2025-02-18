@@ -13,9 +13,13 @@ interface Iterable<t> {
    let .unsafe-iter(): Iterator<t>;
 };
 
-interface FromVector<t> {
-   let .move-to(self: Vector<t>, out: Type<FromVector<t>>): FromVector<t>;
-};
+let length-or-zero(from: Iterable<t>): U64 = (
+   0_u64
+);
+
+let length-or-zero(from: Collection<t>): U64 = (
+   from.length()
+);
 
 let remaining-eq(a: Iterator<at>, b: Iterator<bt>): U64 = (
    let ok = true;
