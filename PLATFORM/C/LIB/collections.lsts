@@ -9,9 +9,29 @@ interface Iterator<t> {
 };
 
 interface Iterable<t> {
-   let .iter(): Iterator<t>;
-   let .unsafe-iter(): Iterator<t>;
+   let .iter(self: Iterable<t>): Iterator<t>;
+   let .unsafe-iter(self: Iterable<t>): Iterator<t>;
 };
+
+interface IteratorRemaining {
+   let .remaining(self: IteratorRemaining+Iterator<t>): U64;
+};
+
+let remaining-or-zero(from: Iterator<t>): U64 = (
+   0
+);
+
+let remaining-or-zero(from: Iterator<t>+IteratorRemaining): U64 = (
+   from.remaining()
+);
+
+let .last(self: Collection<t>): t = (
+   let ln = self.length();
+   if ln == 0 {
+      fail("cannot get .last() from empty element");
+   };
+   self[(ln-1)]
+);
 
 let length-or-zero(from: Iterable<t>): U64 = (
    0_u64
@@ -41,9 +61,32 @@ let .skip(self: Iterator<t>, num: U64): Iterator<t> = (
    self
 );
 
+type RangeIter = RangeIter { let i: U64, len: U64, step: U64 };
+
+let .next(vp: RangeIter[]): Maybe<U64> = (
+   let v = open(vp);
+   let res = if vp.i < vp.length {
+      let idx = vp.i;
+      vp.i = vp.i + vp.step;
+      Some { idx }
+   } else {
+      None :: Maybe<U64>
+   };
+   vp[0] = v;
+   res
+);
+
+let range(len: U64, step: U64): RangeIter = (
+   RangeIter { 0, len, step }
+);
+
+let range(len: U64): RangeIter = (
+   range(len, 1)
+);
+
 type SkipIterator<i+Iterator<t>> = SkipIterator { ii: i, to_skip: U64 };
 
-let .skip(iter: SkipIterator<i>, amount: U64): SkipIterator<i> = (
+let .skip(iter: i+Iterator<t>, amount: U64): SkipIterator<i> = (
    SkipIterator { iter.ii, iter.to_skip + amount }
 );
 
@@ -56,6 +99,25 @@ let .next(vp: SkipIterator<i+Iterator<t>>[]): Maybe<t> = (
    let val = (&v.ii).next();
    vp[0] = v;
    val
+);
+
+type LimitIterator<i+Iterator<t>> = LimitIterator { ii: i, idx: U64, limit: U64 };
+
+let .next(vp: LimitIterator<i+Iterator<t>>[]): Maybe<t> = (
+   let v = open(vp);
+   let val = if v.idx < v.limit {
+      v.idx = v.idx + 1;
+      (&v.ii).next()
+   } else {
+      None :: Maybe<t>
+   };
+   vp[0] = v;
+   val
+);
+
+# the resulting iter has at most <amount> elements
+let .limit(iter: i+Iterator<t>, amount: U64): LimitIterator<i> = (
+   LimitIterator { iter, 0, amount }
 );
 
 type ZipIterator<ai+Iterator<at>, bi+Iterator<bt>> = ZipIterator { aii: ai, bii: bi };
@@ -213,7 +275,7 @@ let to-smart-string(ls: Iterable<t>): String = (
    ls.join(", ", "[", "]")
 );
 
-# TODO: use iterators in the following two functions
+# TODO: use iterators in the following 3 functions
 
 let .find-first(list: Collection<t>, elem: e): Maybe<U64> = (
    let found = false;
@@ -236,6 +298,104 @@ let .find-first(list: Collection<t>, elem: e): Maybe<U64> = (
    } else {
       None{} :: Maybe<U64>
    }
+);
+
+let .find-first-with-indent(list: Collection<t>, elem: e, up: Collection<uv>, down: Collection<dv>): Maybe<U64> = (
+   let found = false;
+
+   let ind = 0_u64;
+   let i = 0_u64;
+   let where = 0_u64;
+   let len = list.length();
+   while i < len {
+      if up.contains(list[i]) {
+         ind = ind + 1;
+         i = i + 1;
+      } else {
+         if down.contains(list[i]) {
+            if ind == 0 {
+               fail("unopened parentheses");
+            };
+            ind = ind - 1;
+            i = i + 1;
+         } else {
+            match list[i] {
+               elem => (
+                  if ind == 0 {
+                     found = true;
+                     where = i;
+                     i = len; # break
+                  } else {
+                     i = i + 1;
+                  };
+               );
+      
+               other => (
+                  i = i + 1;
+               );
+            };
+         };
+      };
+   };
+
+   if ind != 0_u64 {
+      fail("unclosed parentheses");
+   };
+
+   if found {
+      Some{where}
+   } else {
+      None{} :: Maybe<U64>
+   }
+);
+
+let .collect(x: Iterator<t>, to: Vector<t>): Vector<t> = (
+   let rem = remaining-or-zero(x);
+   if rem != 0 {
+      to = to.reserve-additional(rem);
+   };
+
+   for item in x {
+      to = to.push(item);
+   };
+   to
+);
+
+let .collect(x: Iterator<t>): Vector<t> = (
+   let to = mk-vector(type(t), 0);
+   to = x.collect(to);
+   to
+);
+
+type SplitWithIndentIter<t,sp,uv,dv> = SplitWithIndentIter { data: Vector<t>, split: sp, up: Vector<uv>, down: Vector<dv> };
+
+let .next(vp: SplitWithIndentIter<t,sp,uv,dv>[]): Maybe<Vector<t>> => (
+   let v = open(vp);
+
+   if v.data.length() > 0 {
+      let idx-of-sep = v.data.find-first-with-indent(v.split, v.up, v.down);
+      let val = match idx-of-sep {
+         Some { content=content } => (
+            let r = vp.data.unsafe-iter().limit(content).collect();
+            vp.data = vp.data.remove-front(content+1);
+            r
+         );
+
+         None {} => (
+            let t = vp.data;
+            vp.data = mk-vector(type(t), 0);
+            t
+         );
+      };
+      vp[0] = v;
+      val
+   } else {
+      None {} :: Maybe<Vector<t>>
+   }
+);
+
+let split-with-indent(self: Collection<t>, split: sp, up: Collection<uv>, down: Collection<dv>): SplitWithIndentIter<t,sp,uv,dv> = (
+   SplitWithIndentIter { self.unsafe-iter().collect(), split, up.unsafe-iter().collect(), down.unsafe-iter().collect() }
 );
 
 let .find-last(list: Collection<t>, elem: e): Maybe<U64> = (
