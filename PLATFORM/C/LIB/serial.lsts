@@ -121,7 +121,7 @@ let deserialize(vali: SerialVal, ty: Type<ot+FromVector<eltt+Deserializable>>): 
    match vali {
       SerialVec { val=val } => (
          let out = mk-vector(type(eltt), val.length());
-         for x in val {
+         for x in val.unsafe-iter() {
             out = out.push(deserialize(x,type(eltt)));
          };
          out.move-to(ty)
@@ -138,7 +138,20 @@ let serialize(self: Iterable<t+Serializable>): SerialVal = (
    SerialVec { out }
 );
 
-# TODO: deserialize for dict
+let deserialize(val: SerialVal, ty: Type<HashtableEq<k+Deserializable,v+Deserializable>>): HashtableEq<k,v> = (
+   let out = {} :: HashtableEq<k,v>;
+   match val {
+      SerialDict { val=val } => (
+         for kv in val.unsafe-iter() {
+            let k = deserialize(open(kv.first), type(k));
+            let v = deserialize(open(kv.second), type(v));
+            out = out.bind(k, v);
+         };
+      );
+      r => ( fail("can only deserialize map from serialdict") );
+   };
+   out
+);
 
 let serialize(self: HashtableEq<k+Serializable,v+Serializable>): SerialVal = (
    let out = {} :: HashtableEq<SerialVal, SerialVal>;

@@ -175,9 +175,7 @@ let .push-all(self: Vector<t>, val: Iterable<t>): Vector<t> = (
    if ln != 0 {
       self = self.reserve-additional(ln);
    };
-   for x in val {
-      self = self.push(x);
-   };
+   self = val.unsafe-iter().collect(self);
    self
 );
 
