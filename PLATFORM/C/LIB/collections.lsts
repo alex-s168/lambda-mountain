@@ -200,8 +200,8 @@ let .enumerate(i: Iterator<t>): EnumerateIterator<i> = (
 );
 
 type CollectionIteratorBase<c+Collection<t>> = CollectionIteratorBase { coll: c, idx: U64 };
-type CollectionIteratorBase<c+Collection<t>> => Iterator<t>;
-type CollectionIteratorBase<c+Collection<t>> => IteratorRemaining;
+type CollectionIteratorBase<Collection<t>> => Iterator<t>;
+type CollectionIteratorBase<Collection<t>> => IteratorRemaining;
 
 let .remaining(self: CollectionIteratorBase<c+Collection<t>>): U64 = (
    self.coll.length() - self.idx
@@ -211,7 +211,7 @@ let .skip(self: CollectionIteratorBase<c>, num: U64): CollectionIteratorBase<c> 
    CollectionIteratorBase { self.coll, self.idx + num }
 );
 
-let .next(p: CollectionIteratorBase<c+Collection<t>>[]): Maybe<t> = (
+let .next(p: CollectionIteratorBase<Collection<t>>[]): Maybe<t> = (
    let v = p[0];
    if v.idx < v.coll.length() {
       let val = v.coll[v.idx];
