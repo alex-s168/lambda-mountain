@@ -1,4 +1,7 @@
 
+type List<x> => Iterable<x>;
+type List<x> => Collection<x>;
+
 let $"[]"(tt: List<x>, idx: U64): x = (
    while idx > 0 {
       if not(tt.has-head()) {
@@ -19,12 +22,13 @@ let .unique(ls: List<x>): List<x> = (
    rs
 );
 
-type ListIter<x> = ListIter { list: List<x> }
+type ListIter<x> = ListIter { list: List<x> };
+type ListIter<x> => Iterator<x>;
 
 let .next(ls: ListIter<x>[]): Maybe<x> = (
    match open(ls.list) {
       [i.. rst] => (
-         ls[0_u64].list = rst;
+         ls[0].list = rst;
          Some(i)
       );
       [] => (None :: Maybe<x>);

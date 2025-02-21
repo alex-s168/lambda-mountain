@@ -2,20 +2,20 @@
 interface Collection<t> {
    let .length(self: Collection<t>): U64;
    let $"[]"(self: Collection<t>, idx: U64): t;
-};
+}
 
 interface Iterator<t> {
    let .next(self: Iterator<t>[]): Maybe<t>;
-};
+}
 
 interface Iterable<t> {
    let .iter(self: Iterable<t>): Iterator<t>;
    let .unsafe-iter(self: Iterable<t>): Iterator<t>;
-};
+}
 
 interface IteratorRemaining {
    let .remaining(self: IteratorRemaining+Iterator<t>): U64;
-};
+}
 
 let remaining-or-zero(from: Iterator<t>): U64 = (
    0
@@ -61,7 +61,13 @@ let .skip(self: Iterator<t>, num: U64): Iterator<t> = (
    self
 );
 
-type RangeIter = RangeIter { let i: U64, len: U64, step: U64 };
+type RangeIter = RangeIter { i: U64, len: U64, step: U64 };
+type RangeIter => Iterable<U64>;
+type RangeIter => IteratorRemaining;
+
+let .remaining(self: RangeIter): U64 = (
+   (self.len - self.i) / self.step
+);
 
 let .next(vp: RangeIter[]): Maybe<U64> = (
    let v = open(vp);
@@ -85,6 +91,12 @@ let range(len: U64): RangeIter = (
 );
 
 type SkipIterator<i+Iterator<t>> = SkipIterator { ii: i, to_skip: U64 };
+type SkipIterator<i+Iterator<t>> => Iterator<t>;
+type SkipIterator<i+Iterator<t>+IteratorRemaining> => IteratorRemaining;
+
+let .remaining(self: SkipIterator<i+Iterator<t>+IteratorRemaining>): U64 = (
+   self.ii.remaining() - self.to_skip
+);
 
 let .skip(iter: i+Iterator<t>, amount: U64): SkipIterator<i> = (
    SkipIterator { iter.ii, iter.to_skip + amount }
@@ -102,6 +114,12 @@ let .next(vp: SkipIterator<i+Iterator<t>>[]): Maybe<t> = (
 );
 
 type LimitIterator<i+Iterator<t>> = LimitIterator { ii: i, idx: U64, limit: U64 };
+type LimitIterator<Iterator<t>> => Iterator<t>;
+type LimitIterator<Iterator<t>> => IteratorRemaining;
+
+let .remaining(self: LimitIterator<t>): U64 = (
+   self.limit - self.idx
+);
 
 let .next(vp: LimitIterator<i+Iterator<t>>[]): Maybe<t> = (
    let v = open(vp);
@@ -121,6 +139,12 @@ let .limit(iter: i+Iterator<t>, amount: U64): LimitIterator<i> = (
 );
 
 type ZipIterator<ai+Iterator<at>, bi+Iterator<bt>> = ZipIterator { aii: ai, bii: bi };
+type ZipIterator<Iterator<at>, Iterator<bt>> => Iterator<Tuple<at,bt>>;
+type ZipIterator<Iterator<at>+IteratorRemaining, Iterator<bt>+IteratorRemaining> => IteratorRemaining;
+
+let .remaining(self: ZipIterator<Iterator<at>+IteratorRemaining, Iterator<bt>+IteratorRemaining>): U64 = (
+   min(self.aii.remaining(), self.bii.remaining())
+);
 
 let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt>> = (
    let v = open(p);
@@ -138,13 +162,19 @@ let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt
    res
 );
 
-let .zip(ai+Iterator<at>, bi+Iterator<bt>): ZipIterator<ai,bi> = (
+let .zip(ai: Iterator<at>, bi: Iterator<bt>): ZipIterator<ai,bi> = (
    ZipIterator { ai, bi }
 );
 
 type EnumerateIterator<i+Iterator<t>> = EnumerateIterator { ii: i, idx: U64 };
+type EnumerateIterator<Iterator<t>> => Iterator<Tuple<U64,t>>;
+type EnumerateIterator<Iterator<t>+IteratorRemaining> => IteratorRemaining;
 
-let .next(p: EnumerateIterator<i+Iterator<t>>[]): Maybe<Tuple<U64, i>> = (
+let .remaining(self: EnumerateIterator<Iterator<t>+IteratorRemaining>): U64 = (
+   self.ii.remaining()
+);
+
+let .next(p: EnumerateIterator<i+Iterator<t>>[]): Maybe<Tuple<U64, t>> = (
    let v = open(p);
    let iv = (&v.ii).next();
 
@@ -165,8 +195,32 @@ let .next(p: EnumerateIterator<i+Iterator<t>>[]): Maybe<Tuple<U64, i>> = (
    res
 );
 
-let .enumerate(i+Iterator<t>): EnumerateIterator<i> = (
+let .enumerate(i: Iterator<t>): EnumerateIterator<i> = (
    EnumerateIterator { i, 0_u64 }
+);
+
+type CollectionIteratorBase<c+Collection<t>> = CollectionIteratorBase { coll: c, idx: U64 };
+type CollectionIteratorBase<c+Collection<t>> => Iterator<t>;
+type CollectionIteratorBase<c+Collection<t>> => IteratorRemaining;
+
+let .remaining(self: CollectionIteratorBase<c+Collection<t>>): U64 = (
+   self.coll.length() - self.idx
+);
+
+let .skip(self: CollectionIteratorBase<c>, num: U64): CollectionIteratorBase<c> = (
+   CollectionIteratorBase { self.coll, self.idx + num }
+);
+
+let .next(p: CollectionIteratorBase<c+Collection<t>>[]): Maybe<t> = (
+   let v = p[0];
+   if v.idx < v.coll.length() {
+      let val = v.coll[v.idx];
+      v.idx = v.idx + 1;
+      p[0] = v;
+      Some { val } :: Maybe<t>
+   } else {
+      None :: Maybe<t>
+   }
 );
 
 let cmp(ls: Collection<a>, rs: Collection<b>): Ord = (
@@ -199,7 +253,7 @@ let .contains(self: Iterable<t>, value: t): U64 = (
    ok
 );
 
-# TODO: generic Collection<t> impl for Iterable<t>
+# TODO: generic Collection<t> impl for Iterable<t> ?
 
 let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): Bool = (
    if (self.length() - off) < seq.length() {
@@ -369,7 +423,7 @@ let .collect(x: Iterator<t>): Vector<t> = (
 
 type SplitWithIndentIter<t,sp,uv,dv> = SplitWithIndentIter { data: Vector<t>, split: sp, up: Vector<uv>, down: Vector<dv> };
 
-let .next(vp: SplitWithIndentIter<t,sp,uv,dv>[]): Maybe<Vector<t>> => (
+let .next(vp: SplitWithIndentIter<t,sp,uv,dv>[]): Maybe<Vector<t>> = (
    let v = open(vp);
 
    if v.data.length() > 0 {
@@ -424,7 +478,7 @@ let .repeat(self: Iterable<t>, times: U64): Vector<t> = (
    while times > 0 {
       for x in self {
          out = out.push(x);
-      }
+      };
       times = times - 1;
    };
    out
@@ -489,3 +543,5 @@ let .pad-right(self: Iterable<t>, value: t, minlen: U64): Vector<t> = (
 
    out
 );
+
+# TODO: OnceIterable (from iterator)
