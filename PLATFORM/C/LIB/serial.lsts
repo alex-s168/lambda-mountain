@@ -10,11 +10,14 @@ type SerialVal = SerialUInt { val: U64 }
 
 interface Serializable {
    let serialize(self: Serializable): SerialVal;
-};
+}
 
 interface Deserializable {
    let deserialize(val: SerialVal, ty: Type<Deserializable>): Deserializable;
-};
+}
+
+type SerialVal => Serializable;
+type SerialVal => Deserializable;
 
 let deserialize(val: SerialVal, ty: Type<SerialVal>): SerialVal = (
    val
@@ -24,6 +27,9 @@ let serialize(val: SerialVal): SerialVal = (
    val
 );
 
+type Bool => Serializable;
+type Bool => Deserializable;
+
 let deserialize(vali: SerialVal, ty: Type<Bool>): Bool = (
    deserialize(vali,type(U64)) as Bool
 );
@@ -31,6 +37,9 @@ let deserialize(vali: SerialVal, ty: Type<Bool>): Bool = (
 let serialize(val: Bool): SerialVal = (
    SerialBool { val }
 );
+
+type U64 => Serializable;
+type U64 => Deserializable;
 
 let deserialize(vali: SerialVal, ty: Type<U64>): U64 = (
    match vali {
@@ -60,6 +69,9 @@ let serialize(val: U64): SerialVal = (
    SerialUInt { val }
 );
 
+type I64 => Serializable;
+type I64 => Deserializable;
+
 let deserialize(vali: SerialVal, ty: Type<I64>): I64 = (
    match vali {
       SerialBool { val=val } => ( val as I64 );
@@ -80,6 +92,9 @@ let serialize(val: I64): SerialVal = (
    SerialInt { val }
 );
 
+type F64 => Serializable;
+type F64 => Deserializable;
+
 let deserialize(vali: SerialVal, ty: Type<F64>): F64 = (
    match vali {
       SerialBool { val=val } => ( val as F64 );
@@ -95,6 +110,9 @@ let serialize(val: F64): SerialVal = (
    SerialFlt { val }
 );
 
+type String => Serializable;
+type String => Deserializable;
+
 let deserialize(vali: SerialVal, ty: Type<String>): String = (
    match vali {
       SerialStr  { val=val } => ( val );
@@ -106,6 +124,9 @@ let serialize(val: String): SerialVal = (
    SerialStr { val }
 );
 
+type CString => Serializable;
+type CString => Deserializable;
+
 let deserialize(vali: SerialVal, ty: Type<CString>): CString = (
    match vali {
       SerialStr  { val=val } => ( untern(val) );
@@ -116,6 +137,9 @@ let deserialize(vali: SerialVal, ty: Type<CString>): CString = (
 let serialize(val: CString): SerialVal = (
    SerialStr { (to-smart-string(val)) }
 );
+
+type Iterable<Serializable> => Serializable;
+type FromVector<Deserializable> => Deserializable;
 
 let deserialize(vali: SerialVal, ty: Type<ot+FromVector<eltt+Deserializable>>): ot = (
    match vali {
@@ -137,6 +161,9 @@ let serialize(self: Iterable<t+Serializable>): SerialVal = (
    };
    SerialVec { out }
 );
+
+type HashtableEq<Serializable,Serializable> => Serializable;
+type HashtableEq<Deserializable,Deserializable> => Deserializable;
 
 let deserialize(val: SerialVal, ty: Type<HashtableEq<k+Deserializable,v+Deserializable>>): HashtableEq<k,v> = (
    let out = {} :: HashtableEq<k,v>;

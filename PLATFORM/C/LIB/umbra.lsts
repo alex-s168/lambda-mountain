@@ -37,6 +37,9 @@ type UmbraShortLong = UmbraShort { arr: U8[12] } | UmbraLong { prefix: U8[4], pt
 
 type Umbra = Umbra { len: U32, backing: UmbraShortLong };
 
+type Umbra => Collection<U8>;
+type Umbra => Iterable<U8>;
+
 let .length(s: Umbra[]): U64 = (
     s.len as U64
 );
@@ -255,28 +258,11 @@ let $"+"(l: Umbra[], r: t): Umbra = (
     concat-to-umbra(l, r)
 );
 
-let .iter(self: Umbra): UmbraIter = (
-    to-umbra(self).unsafe-iter();
+let .iter(self: Umbra): CollectionIteratorBase<Umbra> = (
+   to-umbra(self).unsafe-iter()
 );
 
-let .unsafe-iter(self: Umbra): UmbraIter = (
-    UmbraIter { self, 0 }
+let .unsafe-iter(self: Umbra): CollectionIteratorBase<Umbra> = (
+   CollectionIteratorBase { self, 0 }
 );
 
-type UmbraIter = UmbraIter { str: Umbra, idx: U64 };
-
-let .skip(v: UmbraIter, amount: U64): UmbraIter = (
-   UmbraIter { v, v.idx + amount }
-);
-
-let .next(vp: UmbraIter[]): Maybe<U8> = (
-   let v = open(vp);
-   if v.idx >= v.str.length {
-      None :: Maybe<u8>
-   } else {
-      let val = v.str[v.idx];
-      v.idx = v.idx + 1;
-      vp[0] = v;
-      Some { val }
-   }
-);

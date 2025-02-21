@@ -1,4 +1,15 @@
 
+type SmartString => Collection<U8>;
+type SmartString => Iterable<U8>;
+
+let .iter(self: SmartString): CollectionIteratorBase<SmartString> = (
+   CollectionIteratorBase { self, 0 }
+);
+
+let .unsafe-iter(self: SmartString): CollectionIteratorBase<SmartString> = (
+   self.iter()
+);
+
 let cmp(l: CString, r: String): Ord = (
    cmp( intern(l), r )
 );
@@ -82,7 +93,8 @@ let .count-right-spaces(self: String): U64 = (
 
 let .trim-right(self: String): String = (
    while self.length() > 0 && self.last().is-space() {
-      self = self[:(self.length()-1)];
+      let l = self.length() - 1;
+      self = self[:l];
    };
    self
 );

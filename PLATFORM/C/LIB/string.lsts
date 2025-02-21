@@ -1,4 +1,7 @@
 
+type CString => Iterable<U8>;
+type CString => Collection<U8>;
+
 # TODO: instead do U8 iterator for S
 
 let clone-rope(s: S): CString = (
@@ -26,6 +29,7 @@ let clone-rope-impl(s: S, out: Vector<U8>): Vector<U8> = (
 );
 
 type CStringIter = CStringIter { ptr: CString };
+type CStringIter => Iterator<U8>;
 
 let .next(self: CStringIter[]): U8 = (
    let val = open(self).ptr[0];

@@ -1,6 +1,9 @@
 
 type Vector<t> = Vector { data: t[], length: U64, capacity: U64 };
 
+type Vector<t> => Collection<t>;
+type Vector<t> => Iterable<t>;
+
 let mk-vector(type: Type<t>, capacity: U64): Vector<t> = (
    let data-sz = sizeof(t) * capacity;
    Vector { (malloc(data-sz) as t[]), 0_u64, capacity }
@@ -114,33 +117,15 @@ let $"set[]"( v: Vector<t>, i: U64, val: t ): Nil = (
    ()
 );
 
-type VectorIter<t> = VectorIter { vec: Vector<t>, idx: U64 };
-
 # for safety, we clone the vector
 # All modifications done to the vector after creating the iterator will not be seen
-let .iter(v: Vector<t>): VectorIter<t> = (
+let .iter(v: Vector<t>): CollectionIteratorBase<Vector<t>> = (
    v.clone().unsafe-iter()
 );
 
 # If you modify the vector after creating the iterator, weird things will happen
-let .unsafe-iter(v: Vector<t>): VectorIter<t> = (
+let .unsafe-iter(v: Vector<t>): CollectionIteratorBase<Vector<t>> = (
    VectorIter { v, 0_u64 }
-);
-
-let .skip(self: VectorIter<t>, num: U64): VectorIter<t> = (
-   VectorIter { self.vec, self.idx + num }
-);
-
-let .next(p: VectorIter<t>[]): Maybe<t> = (
-   let v = p[0];
-   if v.idx < v.vec.length {
-      let val = v.vec[v.idx];
-      v.idx = v.idx + 1;
-      p[0] = v;
-      Some { val } :: Maybe<t>
-   } else {
-      None :: Maybe<t>
-   }
 );
 
 let .sort(v: Vector<t>): Vector<t> = (
@@ -181,7 +166,7 @@ let .push-all(self: Vector<t>, val: Iterable<t>): Vector<t> = (
 
 interface FromVector<t> {
    let .move-to(self: Vector<t>, out: Type<FromVector<t>>): FromVector<t>;
-};
+}
 
 # MAKES INPUT VECTOR INVALID
 let .move-to(self: Vector<U8>, res: Type<CString>): CString = (
