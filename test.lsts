@@ -1,0 +1,10 @@
+
+import LIB/default.lsts;
+
+let main(): Nil = (
+   let list = [ 1_u64, 2_u64, 3_u64 ].unsafe-iter().collect();
+
+   for x in list.unsafe-iter() {
+      print("\{x}\n");
+   };
+);

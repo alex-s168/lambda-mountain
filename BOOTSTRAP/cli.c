@@ -27379,7 +27379,6 @@ return ({({({({({({({({({({({(lsts_SB_parse_SB_expect_CL__LT_Arrow_LT_Nil_GT__LT
 });
 ({uuid__00000000000994dd=(tail_CL__LT_Arrow_LT_List_LT_Token_GT__GT__LT_List_LT_Token_GT__GT__GT_(uuid__00000000000994dd));({});});
 });
-(fail_CL__LT_Arrow_LT_Never_GT__LT_SmartString_GT__GT_(uuid__00000000000994fd));
 });
 uuid__00000000000994dd;
 });}
