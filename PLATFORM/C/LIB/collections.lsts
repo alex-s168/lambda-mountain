@@ -71,9 +71,9 @@ let .remaining(self: RangeIter): U64 = (
 
 let .next(vp: RangeIter[]): Maybe<U64> = (
    let v = open(vp);
-   let res = if vp.i < vp.length {
-      let idx = vp.i;
-      vp.i = vp.i + vp.step;
+   let res = if v.i < v.len {
+      let idx = v.i;
+      vp.i = v.i + v.step;
       Some { idx }
    } else {
       None :: Maybe<U64>

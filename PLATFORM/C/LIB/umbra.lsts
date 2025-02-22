@@ -263,6 +263,6 @@ let .iter(self: Umbra): CollectionIteratorBase<Umbra> = (
 );
 
 let .unsafe-iter(self: Umbra): CollectionIteratorBase<Umbra> = (
-   CollectionIteratorBase { self, 0 }
+   CollectionIteratorBase { self, 0_u64 }
 );
 
