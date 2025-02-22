@@ -178,3 +178,21 @@ let .move-to(self: Vector<U8>, res: Type<CString>): CString = (
 let .move-to(self: Vector<U8>, res: Type<SmartString>): SmartString = (
    intern(self.move-to-cstring())
 );
+
+let .collect(x: Iterator<t>, to: Vector<t>): Vector<t> = (
+   let rem = remaining-or-zero(x);
+   if rem != 0 {
+      to = to.reserve-additional(rem);
+   };
+
+   for item in x {
+      to = to.push(item);
+   };
+   to
+);
+
+let .collect(x: Iterator<t>, tot: Type<Vector<t>>): Vector<t> = (
+   let to = mk-vector(type(t), 0);
+   to = x.collect(to);
+   to
+);

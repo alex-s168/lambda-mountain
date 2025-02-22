@@ -78,7 +78,12 @@ let .lookup(table: HashtableEq<k,v>, key: k, default: v): v = (
    default
 );
 
+##[DEPRECATED .contains]
 let .has(table: HashtableEq<k,v>, key: k): U64 = (
+   table.contains(key)
+);
+
+let .contains(table: HashtableEq<k,v>, key: k): U64 = (
    let capacity = (table as Tag::HashtableEq).capacity;
    let replacing = false;
    if capacity > 0_u64 {
@@ -95,7 +100,12 @@ let .has(table: HashtableEq<k,v>, key: k): U64 = (
    replacing
 );
 
+##[DEPRECATED .put]
 let .bind(table: HashtableEq<k,v>, key: k, value: v): HashtableEq<k,v> = (
+   table.put(key, value)
+);
+
+let .put(table: HashtableEq<k,v>, key: k, value: v): HashtableEq<k,v> = (
    if is(table, (HashtableEqEOF :: HashtableEq<k,v>)) {
       table = HashtableEq { 0_u64, 0_u64, (0_u64 as Tuple<k,v>[]) };
    };

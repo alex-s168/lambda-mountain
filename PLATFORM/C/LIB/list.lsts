@@ -12,6 +12,7 @@ let $"[]"(tt: List<x>, idx: U64): x = (
    head(tt)
 );
 
+##[DEPRECATED .iter().unique()]
 let .unique(ls: List<x>): List<x> = (
    let rs = [] :: List<x>;
    for l in ls {
@@ -35,6 +36,7 @@ let .next(ls: ListIter<x>[]): Maybe<x> = (
    };
 );
 
+# doesn't make a difference for List<x>
 let .iter(li: List<x>): ListIter<x> = (
    li.unsafe-iter();
 );

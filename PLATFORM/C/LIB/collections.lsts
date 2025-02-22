@@ -253,9 +253,7 @@ let .contains(self: Iterable<t>, value: t): U64 = (
    ok
 );
 
-# TODO: generic Collection<t> impl for Iterable<t> ?
-
-let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): Bool = (
+let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): U64 = (
    if (self.length() - off) < seq.length() {
       false
    } else {
@@ -269,11 +267,11 @@ let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): Bool = (
    }
 );
 
-let .has-prefix(self: Iterable<t>, seq: Iterable<t>): Bool = (
+let .has-prefix(self: Iterable<t>, seq: Iterable<t>): U64 = (
    self.has-prefix-at(0, seq);
 );
 
-let .has-suffix(self: Iterable<t>, seq: Iterable<t>): Bool = (
+let .has-suffix(self: Iterable<t>+Collection<t>, seq: Iterable<t>+Collection<t>): U64 = (
    if seq.length() > self.length() {
       false
    } else {
@@ -403,25 +401,45 @@ let .find-first-with-indent(list: Collection<t>, elem: e, up: Collection<uv>, do
    }
 );
 
-let .collect(x: Iterator<t>, to: Vector<t>): Vector<t> = (
-   let rem = remaining-or-zero(x);
-   if rem != 0 {
-      to = to.reserve-additional(rem);
-   };
-
-   for item in x {
-      to = to.push(item);
-   };
-   to
+let .collect(x: Iterator<t>): Vector<t> = (
+   x.collect(type(Vector<t>))
 );
 
-let .collect(x: Iterator<t>): Vector<t> = (
-   let to = mk-vector(type(t), 0);
-   to = x.collect(to);
-   to
+type UniqueIter<t,i+Iterator<t>> = UniqueIter { set: Hashset<t>, ii: i };
+type UniqueIter<t,i> => Iterator<t>;
+
+let .next(vp: UniqueIter<t,i>[]): Maybe<t> = (
+   let v = open(vp);
+
+   let out = None {} :: Maybe<t>;
+   let loop = true;
+   while loop {
+      let val = (&v.ii).next();
+      match val {
+         Some { content=content } => (
+            (v.set, let nok) = v.set.contains-or-put(content);
+            if nok {
+               loop = false;
+               out = Some { content };
+            };
+         );
+
+         None {} => (
+            loop = false;
+         );
+      };
+   };
+
+   vp[0] = v; 
+   out
+);
+
+let .unique(self: i+Iterator<t>): UniqueIter<t,i> = (
+   UniqueIter { mk-hashset(type(t)), self }
 );
 
 type SplitWithIndentIter<t,sp,uv,dv> = SplitWithIndentIter { data: Vector<t>, split: sp, up: Vector<uv>, down: Vector<dv> };
+type SplitWithIndentIter<t,sp,uv,dv> => Iterator<Vector<t>>;
 
 let .next(vp: SplitWithIndentIter<t,sp,uv,dv>[]): Maybe<Vector<t>> = (
    let v = open(vp);
