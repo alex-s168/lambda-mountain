@@ -204,6 +204,10 @@ let to-smart-string(self: Serializable): String = (
    to-smart-string(serialize(self))
 );
 
+let .to-json(self: SerialVal, cfg: JsonSerializeCfg): String = (
+   self.to-json(cfg, 0_u64)
+);
+
 let .to-json(self: SerialVal, cfg: JsonSerializeCfg, depth: U64): String = (
    match self {
       SerialUInt { val=val } => ( to-smart-string(val) );
