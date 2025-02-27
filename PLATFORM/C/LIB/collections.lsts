@@ -17,15 +17,15 @@ interface IteratorRemaining {
    let .remaining(self: IteratorRemaining+Iterator<t>): U64;
 }
 
-let remaining-or-zero(from: Iterator<t>): U64 = (
+let remaining-or-zero(from: t+Iterator<x>): U64 = (
    0
 );
 
-let remaining-or-zero(from: Iterator<t>+IteratorRemaining): U64 = (
+let remaining-or-zero(from: t+Iterator<x>+IteratorRemaining): U64 = (
    from.remaining()
 );
 
-let .last(self: Collection<t>): t = (
+let .last(self: t+Collection<x>): x = (
    let ln = self.length();
    if ln == 0 {
       fail("cannot get .last() from empty element");
@@ -33,15 +33,15 @@ let .last(self: Collection<t>): t = (
    self[(ln-1)]
 );
 
-let length-or-zero(from: Iterable<t>): U64 = (
+let length-or-zero(from: t+Iterable<x>): U64 = (
    0_u64
 );
 
-let length-or-zero(from: Collection<t>): U64 = (
+let length-or-zero(from: t+Collection<x>): U64 = (
    from.length()
 );
 
-let remaining-eq(a: Iterator<at>, b: Iterator<bt>): U64 = (
+let remaining-eq(a: at+Iterator<ax>, b: bt+Iterator<bx>): U64 = (
    let ok = true;
    while ok {
       let av = (&a).next();
@@ -53,7 +53,7 @@ let remaining-eq(a: Iterator<at>, b: Iterator<bt>): U64 = (
    ok
 );
 
-let .skip(self: Iterator<t>, num: U64): Iterator<t> = (
+let .skip(self: t+Iterator<x>, num: U64): t = (
    while num > 0 {
       (&self).next();
       num = num - 1;
@@ -166,7 +166,7 @@ let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt
    res
 );
 
-let .zip(ai: Iterator<at>, bi: Iterator<bt>): ZipIterator<ai,bi> = (
+let .zip(ai: ait+Iterator<at>, bi: bit+Iterator<bt>): ZipIterator<ait,bit> = (
    ZipIterator { ai, bi }
 );
 
@@ -198,7 +198,7 @@ let .next(p: TryZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<Ma
    res
 );
 
-let .try-zip(ai: Iterator<at>, bi: Iterator<bt>): TryZipIterator<ai,bi> = (
+let .try-zip(ai: ait+Iterator<at>, bi: bit+Iterator<bt>): TryZipIterator<ait,bit> = (
    TryZipIterator { ai, bi }
 );
 
@@ -231,7 +231,7 @@ let .next(p: EnumerateIterator<i+Iterator<t>>[]): Maybe<Tuple<U64, t>> = (
    res
 );
 
-let .enumerate(i: Iterator<t>): EnumerateIterator<i> = (
+let .enumerate(i: t+Iterator<x>): EnumerateIterator<x> = (
    EnumerateIterator { i, 0_u64 }
 );
 
@@ -259,7 +259,7 @@ let .next(p: CollectionIteratorBase<Collection<t>>[]): Maybe<t> = (
    }
 );
 
-let cmp(ls: Collection<a>, rs: Collection<b>): Ord = (
+let cmp(ls: at+Collection<a>, rs: bt+Collection<b>): Ord = (
    let diff = Equal;
 
    let lslen = ls.length();
@@ -279,7 +279,7 @@ let cmp(ls: Collection<a>, rs: Collection<b>): Ord = (
    Equal
 );
 
-let .contains(self: Iterable<t>, value: t): U64 = (
+let .contains(self: it+Iterable<t>, value: t): U64 = (
    let ok = false;
    for x in self.unsafe-iter() {
       if x == value {
@@ -289,7 +289,7 @@ let .contains(self: Iterable<t>, value: t): U64 = (
    ok
 );
 
-let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): U64 = (
+let .has-prefix-at(self: it+Iterable<t>, off: U64, seq: sit+Iterable<t>): U64 = (
    let ok = true;
    for pair in self.unsafe-iter().skip(off).try-zip(seq.unsafe-iter()) {
       if pair.first != pair.second {
@@ -299,11 +299,11 @@ let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): U64 = (
    ok
 );
 
-let .has-prefix(self: Iterable<t>, seq: Iterable<t>): U64 = (
+let .has-prefix(self: it+Iterable<t>, seq: sit+Iterable<t>): U64 = (
    self.has-prefix-at(0, seq);
 );
 
-let .has-suffix(self: Iterable<t>+Collection<t>, seq: Iterable<t>+Collection<t>): U64 = (
+let .has-suffix(self: it+Iterable<t>+Collection<t>, seq: sit+Iterable<t>+Collection<t>): U64 = (
    if seq.length() > self.length() {
       false
    } else {
@@ -311,7 +311,7 @@ let .has-suffix(self: Iterable<t>+Collection<t>, seq: Iterable<t>+Collection<t>)
    };
 );
 
-let .find-first(self: Iterable<t>, seq: Iterable<t>): Maybe<U64> = (
+let .find-first(self: it+Iterable<t>, seq: sit+Iterable<t>): Maybe<U64> = (
    let found = false;
    let i = 0_u64;
    while i < self.length() && not(found) {
@@ -328,11 +328,11 @@ let .find-first(self: Iterable<t>, seq: Iterable<t>): Maybe<U64> = (
    };
 );
 
-let .contains(self: Iterable<t>, seq: Iterable<t>): U64 = (
+let .contains(self: it+Iterable<t>, seq: sit+Iterable<t>): U64 = (
    self.find-first(seq).is-some()
 );
 
-let .join(self: Iterable<t>, sep: String, prefix: String, suffix: String): String = (
+let .join(self: it+Iterable<t>, sep: String, prefix: String, suffix: String): String = (
    let out = prefix;
    for iv in self.unsafe-iter().enumerate() {
       if iv.first != 0 {
@@ -346,22 +346,22 @@ let .join(self: Iterable<t>, sep: String, prefix: String, suffix: String): Strin
    out
 );
 
-let .join(self: Iterable<t>, sep: String): String = (
+let .join(self: it+Iterable<t>, sep: String): String = (
    self.join(sep, "", "")
 );
 
 # should not be used
-let .join(self: Iterable<t>, sep: CString): CString = (
+let .join(self: it+Iterable<t>, sep: CString): CString = (
    untern(self.join(intern(sep), "", ""))
 );
 
-let to-smart-string(ls: Iterable<t>): String = (
+let to-smart-string(ls: it+Iterable<t>): String = (
    ls.join(", ", "[", "]")
 );
 
 # TODO: use iterators in the following 3 functions
 
-let .find-first(list: Collection<t>, elem: e): Maybe<U64> = (
+let .find-first(list: it+Collection<t>, elem: e): Maybe<U64> = (
    let found = false;
 
    let i = 0_u64;
@@ -384,7 +384,7 @@ let .find-first(list: Collection<t>, elem: e): Maybe<U64> = (
    }
 );
 
-let .find-first-with-indent(list: Collection<t>, elem: e, up: Collection<uv>, down: Collection<dv>): Maybe<U64> = (
+let .find-first-with-indent(list: lit+Collection<t>, elem: e, up: uit+Collection<uv>, down: dit+Collection<dv>): Maybe<U64> = (
    let found = false;
 
    let ind = 0_u64;
@@ -433,7 +433,7 @@ let .find-first-with-indent(list: Collection<t>, elem: e, up: Collection<uv>, do
    }
 );
 
-let .collect(x: Iterator<t>): Vector<t> = (
+let .collect(x: it+Iterator<t>): Vector<t> = (
    x.collect(type(Vector<t>))
 );
 
@@ -498,11 +498,11 @@ let .next(vp: SplitWithIndentIter<t,sp,uv,dv>[]): Maybe<Vector<t>> = (
    }
 );
 
-let split-with-indent(self: Collection<t>, split: sp, up: Collection<uv>, down: Collection<dv>): SplitWithIndentIter<t,sp,uv,dv> = (
+let split-with-indent(self: sit+Collection<t>, split: sp, up: ut+Collection<uv>, down: dt+Collection<dv>): SplitWithIndentIter<t,sp,uv,dv> = (
    SplitWithIndentIter { self.unsafe-iter().collect(), split, up.unsafe-iter().collect(), down.unsafe-iter().collect() }
 );
 
-let .find-last(list: Collection<t>, elem: e): Maybe<U64> = (
+let .find-last(list: lit+Collection<t>, elem: e): Maybe<U64> = (
    let found = false;
    let found_idx = 0_u64;
 
@@ -523,7 +523,7 @@ let .find-last(list: Collection<t>, elem: e): Maybe<U64> = (
    }
 );
 
-let .repeat(self: Iterable<t>, times: U64): Vector<t> = (
+let .repeat(self: sit+Iterable<t>, times: U64): Vector<t> = (
    let out = mk-vector(type(t), times);
    while times > 0 {
       for x in self {
@@ -534,13 +534,14 @@ let .repeat(self: Iterable<t>, times: U64): Vector<t> = (
    out
 );
 
-let .to-vector(l: Iterable<t>): Vector<t> = (
+let .to-vector(l: lit+Iterable<t>): Vector<t> = (
    let v = mk-vector(type(t), 0);
    v = v.push-all(l);
    v
 );
 
-let concat-to-vector( vl: Iterable<t>, vr: Iterable<t> ): t = (
+# TODO: replace with .cat iter and collect
+let concat-to-vector( vl: vlit+Iterable<t>, vr: vrit+Iterable<t> ): t = (
    let v = mk-vector(type(t), 0);
 
    for x in vl.unsafe-iter() {
@@ -554,7 +555,7 @@ let concat-to-vector( vl: Iterable<t>, vr: Iterable<t> ): t = (
    v
 );
 
-let .pad-left(self: Collection<t>, value: t, minlen: U64): Vector<t> = (
+let .pad-left(self: sit+Collection<t>, value: t, minlen: U64): Vector<t> = (
    if self.length() > minlen {
       minlen = self.length();
    };
@@ -574,7 +575,7 @@ let .pad-left(self: Collection<t>, value: t, minlen: U64): Vector<t> = (
    out
 );
 
-let .pad-right(self: Iterable<t>, value: t, minlen: U64): Vector<t> = (
+let .pad-right(self: sit+Iterable<t>, value: t, minlen: U64): Vector<t> = (
    if self.length() > minlen {
       minlen = self.length();
    };
