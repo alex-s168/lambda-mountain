@@ -49,3 +49,11 @@ let .next(vp: HashsetIter<t>[]): Maybe<t> = (
    vp[0] = v;
    val
 );
+
+let .unsafe-iter(self: Hashset<t>): HashsetIter<t> = (
+   HashsetIter { self.backing.unsafe-iter() }
+);
+
+let .iter(self: Hashset<t>): HashsetIter<t> = (
+   HashsetIter { self.backing.iter() }
+);

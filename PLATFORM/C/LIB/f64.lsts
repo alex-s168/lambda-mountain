@@ -23,6 +23,8 @@ declare-unop( not, raw-type(F64), raw-type(U64), ( l"(!"; x; l")"; ) );
 
 declare-unop( into-branch-conditional, raw-type(F64), raw-type(BranchConditional), x );
 
+let cmp(l: F64, r: F64): Ord = if l==r then Equal else if l<r then LessThan else GreaterThan;
+
 let .abs(self: F64): F64 = (
    if self < 0 { 0_f64 - self } else { self }
 );

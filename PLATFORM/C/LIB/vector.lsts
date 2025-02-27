@@ -176,7 +176,7 @@ let .move-to(self: Vector<U8>, res: Type<CString>): CString = (
 
 # MAKES INPUT VECTOR INVALID
 let .move-to(self: Vector<U8>, res: Type<SmartString>): SmartString = (
-   intern(self.move-to-cstring())
+   intern(self.move-to(type(CString)))
 );
 
 let .collect(x: Iterator<t>, to: Vector<t>): Vector<t> = (

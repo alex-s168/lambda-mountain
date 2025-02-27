@@ -146,6 +146,10 @@ let .remaining(self: ZipIterator<Iterator<at>+IteratorRemaining, Iterator<bt>+It
    min(self.aii.remaining(), self.bii.remaining())
 );
 
+let .skip(self: ZipIterator<ai,bi>, num: U64): ZipIterator<ai,bi> = (
+   ZipIterator { self.aii.skip(num), self.bii.skip(num) }
+);
+
 let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt>> = (
    let v = open(p);
    let av = (&v.aii).next();
@@ -164,6 +168,38 @@ let .next(p: ZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<at,bt
 
 let .zip(ai: Iterator<at>, bi: Iterator<bt>): ZipIterator<ai,bi> = (
    ZipIterator { ai, bi }
+);
+
+type TryZipIterator<ai+Iterator<at>, bi+Iterator<bt>> = TryZipIterator { aii: ai, bii: bi };
+type TryZipIterator<Iterator<at>, Iterator<bt>> => Iterator<Tuple<Maybe<at>, Maybe<bt>>>;
+type TryZipIterator<Iterator<at>+IteratorRemaining, Iterator<bt>+IteratorRemaining> => IteratorRemaining;
+
+let .remaining(self: TryZipIterator<Iterator<at>+IteratorRemaining, Iterator<bt>+IteratorRemaining>): U64 = (
+   max(self.aii.remaining(), self.bii.remaining())
+);
+
+let .skip(self: TryZipIterator<ai,bi>, num: U64): TryZipIterator<ai,bi> = (
+   TryZipIterator { self.aii.skip(num), self.bii.skip(num) }
+);
+
+let .next(p: TryZipIterator<ai+Iterator<at>, bi+Iterator<bt>>[]): Maybe<Tuple<Maybe<at>,Maybe<bt>>> = (
+   let v = open(p);
+   let av = (&v.aii).next();
+   let bv = (&v.bii).next();
+
+   let res = if av.is-some() || bv.is-some() {
+      Some { Tuple { av, bv } } :: Maybe<Tuple<Maybe<at>,Maybe<bt>>>
+   } else {
+      None :: Maybe<Tuple<Maybe<at>,Maybe<bt>>>
+   };
+
+   p[0] = v;
+
+   res
+);
+
+let .try-zip(ai: Iterator<at>, bi: Iterator<bt>): TryZipIterator<ai,bi> = (
+   TryZipIterator { ai, bi }
 );
 
 type EnumerateIterator<i+Iterator<t>> = EnumerateIterator { ii: i, idx: U64 };
@@ -199,7 +235,7 @@ let .enumerate(i: Iterator<t>): EnumerateIterator<i> = (
    EnumerateIterator { i, 0_u64 }
 );
 
-type CollectionIteratorBase<c+Collection<t>> = CollectionIteratorBase { coll: c, idx: U64 };
+type CollectionIteratorBase<c> = CollectionIteratorBase { coll: c, idx: U64 };
 type CollectionIteratorBase<Collection<t>> => Iterator<t>;
 type CollectionIteratorBase<Collection<t>> => IteratorRemaining;
 
@@ -254,17 +290,13 @@ let .contains(self: Iterable<t>, value: t): U64 = (
 );
 
 let .has-prefix-at(self: Iterable<t>, off: U64, seq: Iterable<t>): U64 = (
-   if (self.length() - off) < seq.length() {
-      false
-   } else {
-      let ok = true;
-      for pair in self.unsafe-iter().skip(off).zip(seq.unsafe-iter()) {
-         if pair.first != pair.second {
-            ok = false;
-         };
+   let ok = true;
+   for pair in self.unsafe-iter().skip(off).try-zip(seq.unsafe-iter()) {
+      if pair.first != pair.second {
+         ok = false;
       };
-      ok
-   }
+   };
+   ok
 );
 
 let .has-prefix(self: Iterable<t>, seq: Iterable<t>): U64 = (

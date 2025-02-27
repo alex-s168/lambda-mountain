@@ -962,7 +962,7 @@ let lsts-parse-assign(tokens: List<Token>): Tuple<AST,List<Token>> = (
          tokens = rhs-rest.second;
 
          let i = 0_u64;
-         for lhs in lefts {
+         for lhs in lefts.iter() {
             let fieldstr = c"." + to-string(i+1);
             let rexpr = close(App {
                close(Var{ fieldstr, with-location(mk-token(fieldstr),loc) }),
