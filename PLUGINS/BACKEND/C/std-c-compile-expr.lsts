@@ -25,7 +25,7 @@ let std-c-compile-expr(ctx: FContext, t: AST): Fragment = (
             );
             _ => terms = ASTEOF;
          }};
-         for ct in terms-list.reverse {
+         for ct in terms-list.reverse().iter() {
             let f = std-c-compile-expr(ctx, ct);
             ctx = open(f.context);
             e = std-c-chain( e, f );

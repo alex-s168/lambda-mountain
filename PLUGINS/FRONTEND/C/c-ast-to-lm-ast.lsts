@@ -53,7 +53,7 @@ let std-c-expr-of-statement(t: CTerm): AST = (
    match t {
       CCompound{terms=terms} => (
          let inner = ASTNil;
-         for it in terms {
+         for it in terms.iter() {
             inner = App{ true, close(inner), close(std-c-expr-of-statement(it)) };
          };
          App{ false, close(Var{c"c::compound", mk-token(c"c::compound")}), close(inner) }
