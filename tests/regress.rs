@@ -26,14 +26,15 @@ fn compile_bootstrap() {
    };
 }
 
-fn run_bootstrap(target: &str) -> String {
-   rm("tmp.c");
+fn run_bootstrap(target: &str, leave_tmp: bool) -> String {
+   if !leave_tmp { rm("tmp.c"); };
    rm("a.out");
    
    let exit = Command::new("./bootstrap")
            .stdout(std::process::Stdio::piped())
            .stderr(std::process::Stdio::piped())
            .arg("--c")
+           .arg("--stripdebug")
            .arg("-o")
            .arg("tmp.c")
            .arg(target)
@@ -78,7 +79,7 @@ fn run_bootstrap(target: &str) -> String {
                               + &String::from_utf8_lossy(&exit.stderr).to_string()
       };
    }
-   rm("tmp.c");
+   if !leave_tmp { rm("tmp.c"); };
    rm("a.out");
    output
 }
@@ -93,7 +94,7 @@ fn regression_tests() {
          let expected = std::fs::read_to_string(path.clone() + ".out")
                        .expect(&format!("Could not load expected output {}.out", path));
          let expected = expected.trim().to_string();
-         let actual = run_bootstrap(&path);
+         let actual = run_bootstrap(&path, false);
          let actual = actual.trim().to_string();
          if expected != actual {
             failures.push(( "--compile", path, expected, actual ));
@@ -106,7 +107,7 @@ fn regression_tests() {
          let expected = std::fs::read_to_string(path.clone() + ".out")
                        .expect(&format!("Could not load expected output {}.out", path));
          let expected = expected.trim().to_string();
-         let actual = run_bootstrap(&path);
+         let actual = run_bootstrap(&path, false);
          let actual = actual.trim().to_string();
          if expected != actual {
             failures.push(( "--compile", path, expected, actual ));
@@ -119,7 +120,7 @@ fn regression_tests() {
          let expected = std::fs::read_to_string(path.clone() + ".out")
                        .expect(&format!("Could not load expected output {}.out", path));
          let expected = expected.trim().to_string();
-         let actual = run_bootstrap(&path);
+         let actual = run_bootstrap(&path, false);
          let actual = actual.trim().to_string();
          if expected != actual {
             failures.push(( "--compile", path, expected, actual ));
@@ -132,7 +133,7 @@ fn regression_tests() {
          let expected = std::fs::read_to_string(path.clone() + ".out")
                        .expect(&format!("Could not load expected output {}.out", path));
          let expected = expected.trim().to_string();
-         let actual = run_bootstrap(&path);
+         let actual = run_bootstrap(&path, false);
          let actual = actual.trim().to_string();
          if expected != actual {
             failures.push(( "--compile", path, expected, actual ));
@@ -145,10 +146,20 @@ fn regression_tests() {
          let expected = std::fs::read_to_string(path.clone() + ".out")
                        .expect(&format!("Could not load expected output {}.out", path));
          let expected = expected.trim().to_string();
-         let actual = run_bootstrap(&path);
+         let actual = run_bootstrap(&path, true);
          let actual = actual.trim().to_string();
          if expected != actual {
             failures.push(( "--compile", path, expected, actual ));
+         } else {
+            let original_c = std::fs::read_to_string(path.clone())
+                          .expect(&format!("Could not load expected output {}", path));
+            let result_c = std::fs::read_to_string("tmp.c")
+                          .expect(&format!("Could not load expected output tmp.c during {}", path));
+            let o1 = original_c.chars().filter(|c| !c.is_whitespace()).collect();
+            let r1 = result_c.chars().filter(|c| !c.is_whitespace()).collect();
+            if o1 != r1 {
+               failures.push(( "--compile", path, o1, r1 ));
+            };
          }
       }
    }

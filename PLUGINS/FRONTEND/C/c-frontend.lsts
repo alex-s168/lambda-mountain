@@ -1,10 +1,8 @@
 
 let c-frontend(fp: CString): Nil = (
+   frontend(c"LIB/c-primitives.lsts"); # hard coded dependency
    let tokens = std-c-tokenize-string(fp, read-file(fp));
-   for t in tokens.unsafe-iter() {
-      print("token: \{t.key}\n");
-   };
-   print("TODO: parse \{fp}\n"); exit(1);
+   std-c-parse(tokens);
 );
 
 register-frontend(c".c", c-frontend);
