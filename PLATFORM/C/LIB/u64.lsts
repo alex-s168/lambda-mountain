@@ -43,4 +43,46 @@ let to-smart-string(i: U64): SmartString = (
    intern(to-string(i))
 );
 
+let to-u64(val: CString, base: U8): U64 = (
+   if base == 0 { fail("bruh"); };
+   if base > 16 {
+      fail("not implemented"); # TODO
+   };
+
+   let o = 0_u64;
+   while non-zero(val) {
+      let c = head-string(val);
+
+      let prev = o;
+      o = o * base;
+      if o < prev {
+         fail("num lit too big for U64");
+      };
+
+      if (c >= "0"[0]) && (c <= "9"[0]) {
+         c = c - "0"[0];
+      } else {
+         if (c >= "a"[0]) && (c <= "z"[0]) {
+            c = c - "a"[0];
+         } else {
+            c = c - "A"[0];
+         };
+      };
+
+      if c >= base {
+         fail("digit too big for base");
+      };
+
+      o = o + c;
+
+      val = tail-string(val);
+   };
+
+   o
+);
+
+let to-u64(val: CString): U64 = (
+   to-u64(val, 10)
+);
+
 type U64 implements DefaultPrintable;

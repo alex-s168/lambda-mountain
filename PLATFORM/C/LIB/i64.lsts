@@ -17,4 +17,22 @@ declare-unop( not, raw-type(I64), raw-type(U64), ( l"(!"; x; l")"; ) );
 
 declare-unop( into-branch-conditional, raw-type(I64), raw-type(BranchConditional), x );
 
+let to-i64(val: CString, base: U8): I64 = (
+   let neg = 0_i64;
+   if non-zero(val) && (head-string(val) == "-") {
+      neg = 1_i64;
+      val = tail-string(val);
+   };
+   let o = to-u64(val, base);
+   if (o >> 63) > 0 {
+      fail("num lit too big for I64");
+   };
+   let no = o as I64;
+   if neg { -no } else { no }
+);
+
+let to-i64(val: CString): I64 = (
+   to-i64(val, 10)
+);
+
 type I64 implements DefaultPrintable;

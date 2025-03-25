@@ -1,0 +1,34 @@
+
+type View<ct> = View { c: ct, off: U64, length: U64 };
+type View<Collection<t>> implements Collection<t>;
+
+let mk-view(c: ct+Collection<t>): View<ct> = (
+   View { c, 0, c.length }
+);
+
+let $"[]"(self: v+View<c+Collection<t>>, idx: U64): t = (
+   if idx >= self.length {
+      fail("index out of bonds");
+   };
+
+   self.c[self.off + idx]
+);
+
+let $"set[]"(self: v+View<c+Collection<t>>, idx: U64, val: t): Nil = (
+   if idx >= self.length {
+      fail("index out of bonds");
+   };
+
+   self.c[self.off + idx] = val;
+);
+
+let head(self: v+View<Collection<t>>): t = (
+   self[0]
+);
+
+let tail(self: v+View<Collection<t>>): v = (
+   if self.length == 0 {
+      fail("cannot tail() empty view");
+   };
+   View { self.c, self.offset + 1, self.length - 1 }
+);
