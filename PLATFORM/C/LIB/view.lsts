@@ -26,9 +26,13 @@ let head(self: v+View<Collection<t>>): t = (
    self[0]
 );
 
-let tail(self: v+View<Collection<t>>): v = (
-   if self.length == 0 {
-      fail("cannot tail() empty view");
+let skip(self: v+View<Collection<t>>, amount: U64): V = (
+   if amount > self.length {
+      fail("cannot View:skip() more elements than available");
    };
-   View { self.c, self.offset + 1, self.length - 1 }
+   View { self.c, self.offset + amount, self.length - amount }
+);
+
+let tail(self: v+View<Collection<t>>): v = (
+   self.skip(1)
 );

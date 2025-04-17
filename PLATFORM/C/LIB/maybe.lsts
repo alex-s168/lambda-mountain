@@ -9,6 +9,15 @@ let .get-or(m: Maybe<x>, default: x): x = (
    }
 );
 
+let .expect(m: Maybe<x>, error: String): x = (
+   match m {
+      Some{content=content} => content;
+      None{} => (
+         fail(error);
+      );
+   }
+);
+
 let .get-or-panic(m: Maybe<x>): x = (
    match m {
       Some{content=content} => content;

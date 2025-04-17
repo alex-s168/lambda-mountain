@@ -2,8 +2,9 @@
 type HashtableEq<k,v> = HashtableEq { occupied: U64, capacity: U64, contents: Tuple<k,v>[] }
                       | HashtableEqEOF;
 
-let .lookup(table: HashtableEq<k,v>, key: k, default: v): v = (
+let $"[]"(table: HashtableEq<k,v>, key: k): Maybe<v> = (
    let capacity = (table as Tag::HashtableEq).capacity;
+   let out = None :: Maybe<v>;
    if capacity > 0_u64 {
       let contents = (table as Tag::HashtableEq).contents;
       let replacing = false;
@@ -15,9 +16,16 @@ let .lookup(table: HashtableEq<k,v>, key: k, default: v): v = (
          old-kv = contents[ki];
          if mem-is-non-zero(old-kv) && old-kv.first==key { replacing = true; };
       };
-      if replacing { default = old-kv.second; };
+      if replacing {
+         out = Some { old-kv.second };
+      };
    };
-   default
+   out
+);
+
+##[[deprecated: $"[]"().get-or()]]
+let .lookup(table: HashtableEq<k,v>, key: k, default: v): v = (
+   table[key].get-or(default)
 );
 
 let .has(table: HashtableEq<k,v>, key: k): U64 = (
