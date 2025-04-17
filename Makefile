@@ -1,10 +1,8 @@
 CC = cc
 
 dev: install-production
-	lm --stripdebug tests/c/modifiers.c
-	cp tests/c/modifiers.c.out original.c
-	cp tmp.c result.c
-	diff original.c result.c
+	lm --swap-c-frontend SRC/index-index.lm
+	cc tmp.c
 
 build: compile-production
 	time ./production --c -o deploy1.c SRC/index-index.lm
